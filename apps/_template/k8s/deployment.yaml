@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-name  # TODO: replace
+  labels:
+    app: app-name  # TODO: replace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-name  # TODO: replace
+  template:
+    metadata:
+      labels:
+        app: app-name  # TODO: replace
+    spec:
+      containers:
+        - name: app-name  # TODO: replace
+          image: app-name:latest  # TODO: replace with your image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: EXAMPLE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-name-secrets  # TODO: create this Secret manually
+                  key: example-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

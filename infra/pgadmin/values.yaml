@@ -1,0 +1,39 @@
+# PgAdmin4 Helm values
+# Chart: runix/pgadmin4 1.64.0
+# Docs: https://github.com/rowanrushe/pgadmin4-helm
+
+env:
+  email: admin@home.dev  # .local is reserved (mDNS) — pgadmin rejects it
+
+## Name of existing secret to use for default pgadmin credentials
+## env.password will be ignored and picked up from this secret
+existingSecret: "pgadmin-credentials"
+
+## Name of key in existing secret to use for default pgadmin credentials
+## Only used when existingSecret is set
+secretKeys:
+  pgadminPasswordKey: password
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - host: pgadmin.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+persistentVolume:
+  enabled: true
+  size: 1Gi
+  storageClass: local-path
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "768Mi"  # pgadmin 9.x needs more headroom; was OOMKilling at 256Mi

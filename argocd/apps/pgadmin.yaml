@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pgadmin
+  namespace: argocd
+  annotations:
+    # After postgres (wave 2) — pgadmin is less critical to ordering but
+    # keeps things logical
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.runix.net
+      chart: pgadmin4
+      targetRevision: "1.64.0"
+      helm:
+        valueFiles:
+          - $values/infra/pgadmin/values.yaml
+
+    - repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+      targetRevision: HEAD
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pgadmin
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

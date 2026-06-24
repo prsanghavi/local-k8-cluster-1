@@ -1,0 +1,45 @@
+# ArgoCD self-management application.
+# After the initial Helm install, apply this to hand control of ArgoCD to itself.
+# Uses multi-source: Helm chart from argo-helm + values file from this repo.
+#
+# Apply with: kubectl apply -f argocd/apps/argocd.yaml
+#
+# To upgrade: bump targetRevision below, commit, then sync in the ArgoCD UI.
+# Check available versions: helm search repo argo/argo-cd --versions
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    # Sync before other apps so ArgoCD itself is healthy first
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    # Source 1: the argo-cd Helm chart
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: "9.*"  # tracks latest 9.x — ArgoCD UI shows OutOfSync when a new patch/minor drops
+      helm:
+        valueFiles:
+          - $values/infra/argocd/values.yaml
+
+    # Source 2: this repo — provides the values file referenced above
+    - repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+      targetRevision: HEAD
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: false    # never auto-prune ArgoCD itself
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true  # required for ArgoCD CRD management

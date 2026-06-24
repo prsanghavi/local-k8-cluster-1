@@ -1,0 +1,79 @@
+# Temporal Helm values — home-1 cluster
+# Chart: temporalio/temporal 1.2.0
+# Reference: https://github.com/temporalio/helm-charts/blob/temporal-1.2.0/charts/temporal/values/values.postgresql.yaml
+
+server:
+  replicaCount: 1
+
+  config:
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      # numHistoryShards CANNOT be changed after the initial deployment.
+      numHistoryShards: 512
+      datastores:
+        default:
+          sql:
+            pluginName: postgres12
+            databaseName: temporal
+            createDatabase: false  # database already created by CNPG Database CR
+            connectAddr: "postgres-cluster-1-rw.postgres.svc.cluster.local:5432"
+            connectProtocol: "tcp"
+            user: temporal_user
+            # existingSecret/secretKey are Helm-specific — stripped before rendering to server config
+            existingSecret: temporal-db-credentials
+            secretKey: password
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: "1h"
+        visibility:
+          sql:
+            pluginName: postgres12
+            databaseName: temporal_visibility
+            createDatabase: false  # database already created by CNPG Database CR
+            connectAddr: "postgres-cluster-1-rw.postgres.svc.cluster.local:5432"
+            connectProtocol: "tcp"
+            user: temporal_user
+            existingSecret: temporal-db-credentials
+            secretKey: password
+            maxConns: 10
+            maxIdleConns: 10
+            maxConnLifetime: "1h"
+
+    # Create the default Temporal namespace on first install
+    namespaces:
+      create: true
+      namespace:
+        - name: default
+          retention: 30d
+        - name: finance-ns-1
+          retention: 30d
+
+admintools:
+  enabled: true
+
+web:
+  enabled: true
+  replicaCount: 1
+  # Required when accessing over HTTP (not HTTPS) via Traefik — CSRF cookie is
+  # marked secure by default and won't be sent over plain HTTP without this.
+  additionalEnv:
+    - name: TEMPORAL_CSRF_COOKIE_INSECURE
+      value: "true"
+  ingress:
+    enabled: true
+    className: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    hosts:
+      - "temporal.local"
+
+# Schema setup runs as Helm hooks before server pods start
+schema:
+  useHelmHooks: true
+  backoffLimit: 100
+
+# Server is 1.31.0 — disable shims that were only needed for <=1.29
+shims:
+  dockerize: false
+  elasticsearchTool: false

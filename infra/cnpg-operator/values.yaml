@@ -1,0 +1,20 @@
+# CloudNativePG operator Helm values
+# Chart: cnpg/cloudnative-pg 0.28.3
+# Docs: https://cloudnative-pg.io/documentation/
+
+# Minimal config — operator runs cluster-wide from cnpg-system namespace.
+# Most behaviour is controlled per-cluster in infra/postgres/cluster.yaml.
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "100Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+# Monitoring off for now — enable when Prometheus is added
+monitoring:
+  podMonitorEnabled: false

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-worker-1
+  namespace: temporal
+  labels:
+    app: temporal-worker-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-worker-1
+  template:
+    metadata:
+      labels:
+        app: temporal-worker-1
+    spec:
+      containers:
+        - name: temporal-worker-1
+          image: k3d-registry:5000/temporal-worker-1:2a3e091
+          imagePullPolicy: Always
+          env:
+            - name: TEMPORAL_HOST
+              value: "temporal-frontend.temporal.svc.cluster.local:7233"
+            - name: TEMPORAL_NAMESPACE
+              value: "default"
+            - name: TEMPORAL_TASK_QUEUE
+              value: "temporal-worker-1-queue"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

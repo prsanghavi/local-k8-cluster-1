@@ -1,0 +1,25 @@
+# CNPG Database CRs for Temporal.
+# CNPG creates these databases and sets temporal_user as owner.
+# Requires temporal_user role to exist (managed in cluster.yaml).
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: temporal
+  namespace: postgres
+spec:
+  name: temporal
+  owner: temporal_user
+  cluster:
+    name: postgres-cluster-1
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: temporal-visibility
+  namespace: postgres
+spec:
+  name: temporal_visibility
+  owner: temporal_user
+  cluster:
+    name: postgres-cluster-1

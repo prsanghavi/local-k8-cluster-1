@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: temporal
+  namespace: argocd
+  annotations:
+    # After postgres (wave 2) — databases and user must exist first
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://temporalio.github.io/helm-charts
+      chart: temporal
+      targetRevision: "1.2.0"
+      helm:
+        valueFiles:
+          - $values/infra/temporal/values.yaml
+
+    - repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+      targetRevision: HEAD
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: temporal
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

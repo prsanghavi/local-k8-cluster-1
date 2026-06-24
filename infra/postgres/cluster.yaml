@@ -1,0 +1,57 @@
+# CloudNativePG Cluster — home-1
+# Requires cnpg-operator to be installed first (ArgoCD sync wave 1).
+#
+# Before syncing this, create the credentials secret:
+#   ./infra/scripts/infra-setup/setup-postgres-secret.sh
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-cluster-1
+  namespace: postgres
+spec:
+  instances: 1
+
+  # PostgreSQL 18 — update patch version here when upgrading
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+
+  bootstrap:
+    initdb:
+      database: homedb
+      owner: homeuser
+      # Secret must exist before sync — create with setup-postgres-secret.sh
+      # Keys: username, password
+      secret:
+        name: postgres-credentials
+
+  storage:
+    size: 2Gi
+    storageClass: local-path  # k3s default — data lands in ~/k3d-data/home-1
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+
+  # Expose as a NodePort so it's reachable on port 5432 via the k3d load balancer
+  # The -rw service is the primary (read-write); -ro is the replica (not used here)
+  postgresql:
+    parameters:
+      max_connections: "100"
+      shared_buffers: "128MB"
+
+  # Declarative role management — CNPG creates/maintains these users.
+  # Secrets must exist in the postgres namespace before ArgoCD syncs.
+  managed:
+    roles:
+      - name: temporal_user
+        ensure: present
+        login: true
+        superuser: false
+        createdb: false
+        # Secret keys: username, password
+        # Create with: ./infra/scripts/infra-setup/setup-temporal-secret.sh
+        passwordSecret:
+          name: temporal-db-credentials

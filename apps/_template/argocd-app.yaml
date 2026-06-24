@@ -1,0 +1,23 @@
+# Copy this file to argocd/apps/<app-name>.yaml and update the fields marked TODO.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-name  # TODO: replace
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kohli-home-mono-repo-1  # TODO: update to actual repo URL
+    targetRevision: HEAD
+    path: apps/app-name/k8s  # TODO: replace app-name
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default  # TODO: update if using a dedicated namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Label must match filename -->
+  <key>Label</key>
+  <string>com.samay.k3d-home-1</string>
+
+  <!-- Full path to the auto-start script -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/ksamay-GO/GitHub/kohli-home-mono-repo-1/infra/scripts/infra-setup/auto-start.sh</string>
+  </array>
+
+  <!-- Run after login, not at system boot (needs OrbStack which is a user app) -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Restart if it crashes or exits non-zero (e.g. Docker wasn't ready yet) -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <!-- Throttle restarts to avoid a tight loop -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <!-- Log output -->
+  <key>StandardOutPath</key>
+  <string>/tmp/k3d-home-1.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/k3d-home-1.error.log</string>
+
+  <!-- Ensure PATH includes Homebrew and common tool locations -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+</dict>
+</plist>

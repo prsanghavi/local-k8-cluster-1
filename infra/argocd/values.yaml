@@ -1,0 +1,33 @@
+# ArgoCD Helm values — home-1 cluster
+# Chart: argo/argo-cd
+# Docs: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+
+global:
+  domain: argocd.local
+
+configs:
+  params:
+    # Run in insecure mode — Traefik handles TLS at the ingress level
+    server.insecure: "true"
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hostname: argocd.local
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+
+# Single replicas — home cluster, no HA needed
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicas: 1
+
+# Disable notifications (can enable later)
+notifications:
+  enabled: false

@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+  annotations:
+    # After cnpg-operator (wave 1) so the Cluster CRD exists before we apply it
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+    targetRevision: HEAD
+    path: infra/postgres
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgres
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
