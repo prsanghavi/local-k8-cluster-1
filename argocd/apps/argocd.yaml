@@ -28,7 +28,7 @@ spec:
           - $values/infra/argocd/values.yaml
 
     # Source 2: this repo — provides the values file referenced above
-    - repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+    - repoURL: https://github.com/ksamay-Budy/local-k8-cluster-1
       targetRevision: HEAD
       ref: values
 

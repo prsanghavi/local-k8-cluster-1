@@ -1,8 +1,8 @@
 #!/bin/bash
-# Starts the k3d home-1 cluster and waits for nodes to be ready.
+# Starts the k3d local-cluster-1 cluster and waits for nodes to be ready.
 set -euo pipefail
 
-CLUSTER_NAME="home-1"
+CLUSTER_NAME="local-cluster-1"
 
 if ! k3d cluster list | grep -q "^${CLUSTER_NAME} "; then
   echo "Cluster '${CLUSTER_NAME}' not found. Run create-cluster.sh first."

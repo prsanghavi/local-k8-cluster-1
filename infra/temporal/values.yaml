@@ -1,9 +1,17 @@
-# Temporal Helm values — home-1 cluster
+# Temporal Helm values — local-cluster-1 cluster
 # Chart: temporalio/temporal 1.2.0
 # Reference: https://github.com/temporalio/helm-charts/blob/temporal-1.2.0/charts/temporal/values/values.postgresql.yaml
 
 server:
   replicaCount: 1
+
+  frontend:
+    service:
+      # NodePort for direct host access to the Temporal gRPC frontend.
+      # Access from the host: localhost:30233
+      type: NodePort
+      port: 7233
+      nodePort: 30233
 
   config:
     persistence:

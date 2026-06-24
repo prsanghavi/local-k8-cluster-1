@@ -29,8 +29,8 @@ cp -r apps/_template apps/<your-app-name>
 
 The cluster is a **k3d** (k3s-in-Docker) single-server cluster running on a Mac via OrbStack. It is long-running and survives Mac restarts.
 
-- **Cluster name**: `home-1`
-- **Persistent data**: `~/k3d-data/home-1/` — lives outside the repo; back this up
+- **Cluster name**: `local-cluster-1`
+- **Persistent data**: `~/k3d-data/local-cluster-1/` — lives outside the repo; back this up
 - **Datastore**: SQLite (default k3s — correct for a single-node personal cluster)
 - **Auto-start**: launchd agent starts the cluster on login (see `infra/scripts/infra-setup/`)
 
@@ -40,7 +40,20 @@ The cluster is a **k3d** (k3s-in-Docker) single-server cluster running on a Mac 
 # 1. Create the cluster (run once)
 ./infra/scripts/infra-setup/create-cluster.sh
 
-# 2. Install the launchd auto-start agent (run once)
+# 2. Install ArgoCD (run once)
+./infra/scripts/infra-setup/argocd/install-argocd.sh
+
+# 3. Create infra secrets — postgres, temporal, pgadmin (safe to re-run; skips existing)
+./infra/scripts/infra-setup/setup-secrets.sh
+
+# 4. Add ArgoCD repo credentials (interactive — prompts for GitHub App PEM)
+./infra/scripts/infra-setup/argocd/setup-repo-secret.sh
+
+# 5. Bootstrap ArgoCD self-management and root app
+kubectl apply -f argocd/apps/argocd.yaml
+kubectl apply -f argocd/root-app.yaml
+
+# 6. Install the launchd auto-start agent (run once)
 ./infra/scripts/infra-setup/install-autostart.sh
 ```
 

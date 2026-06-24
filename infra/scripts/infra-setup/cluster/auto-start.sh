@@ -1,9 +1,9 @@
 #!/bin/bash
 # Called by launchd on login. Waits for OrbStack/Docker to be ready,
-# then starts the k3d home-1 cluster if it isn't already running.
+# then starts the k3d local-cluster-1 cluster if it isn't already running.
 set -euo pipefail
 
-CLUSTER_NAME="home-1"
+CLUSTER_NAME="local-cluster-1"
 REGISTRY_NAME="k3d-registry"   # full container name (k3d prepends "k3d-")
 DOCKER_SOCKET="/var/run/docker.sock"
 MAX_WAIT=120  # seconds to wait for Docker

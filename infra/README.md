@@ -9,7 +9,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `postgres/` | Helm values + ArgoCD app for PostgreSQL |
 | `pgadmin/` | Helm values + ArgoCD app for PgAdmin |
 | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
-| `scripts/infra-setup/` | k3d cluster lifecycle scripts (create, start, stop, auto-start) |
+| `scripts/infra-setup/` | k3d cluster lifecycle scripts (create, start, stop, auto-start, secrets) |
 
 ## Services
 
@@ -35,8 +35,40 @@ infra/<service>/
 
 ## Cluster scripts (`scripts/infra-setup/`)
 
-See `scripts/infra-setup/` for k3d cluster lifecycle management. Run `create-cluster.sh` once before deploying anything here. Persistent data lands in `~/k3d-data/home-1/` on the host.
+See `scripts/infra-setup/` for k3d cluster lifecycle management. Run `create-cluster.sh` once before deploying anything here. Persistent data lands in `~/k3d-data/local-cluster-1/` on the host.
+
+| Script | Purpose |
+|--------|---------|
+| `create-cluster.sh` | One-time cluster creation |
+| `argocd/install-argocd.sh` | Install ArgoCD via Helm |
+| `setup-secrets.sh` | Run all auto secret scripts (postgres, temporal, pgadmin) |
+| `argocd/setup-repo-secret.sh` | Interactive — ArgoCD GitHub App credentials |
+| `start-cluster.sh` / `stop-cluster.sh` | Start or stop the cluster |
 
 ## Secrets
 
-Helm values files should NOT contain real secret values. Use Kubernetes `Secret` objects created manually on the cluster, then reference them via `existingSecret` fields in values (most Bitnami charts support this pattern).
+Helm values files should NOT contain real secret values. Use Kubernetes `Secret` objects created on the cluster, then reference them via `existingSecret` fields in values.
+
+**Before syncing postgres, temporal, or pgadmin**, run:
+
+```bash
+./infra/scripts/infra-setup/setup-secrets.sh
+```
+
+This runs the scripts in `secrets-auto-setup-scripts/` in order. Each script auto-generates passwords and **skips secrets that already exist** (delete a secret first if you need to rotate it).
+
+Individual scripts (same skip-if-exists behaviour):
+
+| Script | Secret | Namespace(s) |
+|--------|--------|--------------|
+| `secrets-auto-setup-scripts/setup-postgres-secret.sh` | `postgres-credentials` | `postgres` |
+| `secrets-auto-setup-scripts/setup-temporal-secret.sh` | `temporal-db-credentials` | `postgres`, `temporal` |
+| `secrets-auto-setup-scripts/setup-pgadmin-secret.sh` | `pgadmin-credentials` | `pgadmin` |
+
+Retrieve passwords:
+
+```bash
+kubectl get secret postgres-credentials    -n postgres -o jsonpath='{.data.password}' | base64 -d && echo
+kubectl get secret temporal-db-credentials -n temporal -o jsonpath='{.data.password}' | base64 -d && echo
+kubectl get secret pgadmin-credentials     -n pgadmin  -o jsonpath='{.data.password}' | base64 -d && echo
+```

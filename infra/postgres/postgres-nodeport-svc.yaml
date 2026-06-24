@@ -1,0 +1,21 @@
+# NodePort service for direct host access to the CNPG primary (read-write) instance.
+# Access from the host: localhost:30432
+#
+# CNPG manages its own ClusterIP services (-rw, -ro, -r); this service is separate
+# and selects the primary pod using CNPG's standard labels.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-cluster-1-nodeport
+  namespace: postgres
+spec:
+  type: NodePort
+  selector:
+    cnpg.io/cluster: postgres-cluster-1
+    role: primary
+  ports:
+    - name: postgres
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
+      nodePort: 30432

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Creates the k3d home-1 cluster.
-# Run once. Data persists to ~/k3d-data/home-1 across restarts and upgrades.
+# Creates the k3d local-cluster-1 cluster.
+# Run once. Data persists to ~/k3d-data/local-cluster-1 across restarts and upgrades.
 set -euo pipefail
 
-CLUSTER_NAME="home-1"
+CLUSTER_NAME="local-cluster-1"
 REGISTRY_NAME="registry"        # k3d prefixes this → container/hostname: k3d-registry
 REGISTRY_PORT="5001"
-DATA_DIR="$HOME/k3d-data/home-1"
+DATA_DIR="$HOME/k3d-data/local-cluster-1"
 
 # ── Preflight ──────────────────────────────────────────────────────────────────
 if ! command -v k3d &>/dev/null; then
@@ -31,13 +31,15 @@ else
 fi
 
 # ── Create cluster ─────────────────────────────────────────────────────────────
-# Volume: maps ~/k3d-data/home-1 into the k3s local-path storage dir.
+# Volume: maps ~/k3d-data/local-cluster-1 into the k3s local-path storage dir.
 #   → All PVCs using the default 'local-path' StorageClass will land here.
 #
-# Ports (all via the k3d load balancer):
-#   80/443   → Traefik ingress (HTTP/HTTPS)
-#   8080     → Temporal Web UI
-#   5050     → PgAdmin
+# Ports:
+#   80/443         → Traefik ingress (HTTP/HTTPS) via loadbalancer
+#   30000-32767    → Full Kubernetes NodePort range via server node
+#                    Docker spawns one proxy per port (~2768 processes); cluster
+#                    creation takes longer than usual — this is expected for a dev cluster.
+#                    Services use memorable NodePorts: Postgres=30432, Temporal gRPC=30233
 k3d cluster create "$CLUSTER_NAME" \
   --servers 1 \
   --agents 0 \
@@ -45,8 +47,7 @@ k3d cluster create "$CLUSTER_NAME" \
   --volume "$DATA_DIR:/var/lib/rancher/k3s/storage@server:0" \
   --port "80:80@loadbalancer" \
   --port "443:443@loadbalancer" \
-  --port "8080:8080@loadbalancer" \
-  --port "5050:5050@loadbalancer" \
+  --port "30000-32767:30000-32767@server:0" \
   --k3s-arg "--tls-san=host.k3d.internal@server:0" \
   --wait
 

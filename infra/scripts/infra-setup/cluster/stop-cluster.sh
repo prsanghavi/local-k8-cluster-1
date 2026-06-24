@@ -1,8 +1,8 @@
 #!/bin/bash
-# Stops the k3d home-1 cluster (data is preserved in ~/k3d-data).
+# Stops the k3d local-cluster-1 cluster (data is preserved in ~/k3d-data).
 set -euo pipefail
 
-CLUSTER_NAME="home-1"
+CLUSTER_NAME="local-cluster-1"
 
 if ! k3d cluster list | grep -q "^${CLUSTER_NAME} "; then
   echo "Cluster '${CLUSTER_NAME}' not found."

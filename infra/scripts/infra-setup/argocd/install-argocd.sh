@@ -1,9 +1,10 @@
 #!/bin/bash
-# Installs ArgoCD via Helm into the home-1 cluster.
+# Installs ArgoCD via Helm into the local-cluster-1 cluster.
 # Run once after the cluster is up. After install, hand control to ArgoCD itself:
-#   1. ./setup-repo-secret.sh
-#   2. kubectl apply -f argocd/apps/argocd.yaml
-#   3. kubectl apply -f argocd/root-app.yaml
+#   1. ../setup-secrets.sh
+#   2. ./setup-repo-secret.sh
+#   3. kubectl apply -f argocd/apps/argocd.yaml
+#   4. kubectl apply -f argocd/root-app.yaml
 set -euo pipefail
 
 NAMESPACE="argocd"
@@ -45,6 +46,7 @@ echo ""
 echo ""
 echo "Next steps:"
 echo "  1. Add to /etc/hosts:      127.0.0.1 argocd.local"
-echo "  2. Add repo credentials:   ./setup-repo-secret.sh"
-echo "  3. Enable self-management: kubectl apply -f $REPO_ROOT/argocd/apps/argocd.yaml"
-echo "  4. Bootstrap root app:     kubectl apply -f $REPO_ROOT/argocd/root-app.yaml"
+echo "  2. Create infra secrets:   ../setup-secrets.sh"
+echo "  3. Add repo credentials:   ./setup-repo-secret.sh"
+echo "  4. Enable self-management: kubectl apply -f $REPO_ROOT/argocd/apps/argocd.yaml"
+echo "  5. Bootstrap root app:     kubectl apply -f $REPO_ROOT/argocd/root-app.yaml"

@@ -1,4 +1,4 @@
-# ArgoCD Helm values — home-1 cluster
+# ArgoCD Helm values — local-cluster-1 cluster
 # Chart: argo/argo-cd
 # Docs: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
 

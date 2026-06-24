@@ -3,7 +3,7 @@
 # Docs: https://github.com/rowanrushe/pgadmin4-helm
 
 env:
-  email: admin@home.dev  # .local is reserved (mDNS) — pgadmin rejects it
+  email: admin@local.dev
 
 ## Name of existing secret to use for default pgadmin credentials
 ## env.password will be ignored and picked up from this secret

@@ -25,7 +25,7 @@ kohli-home-mono-repo-1/
     ├── pgadmin/
     ├── temporal/
     └── scripts/
-        └── infra-setup/   ← cluster lifecycle scripts (create, start, stop, auto-start)
+        └── infra-setup/   ← cluster lifecycle + secret setup scripts
 ```
 
 ## Key conventions
@@ -39,9 +39,9 @@ kohli-home-mono-repo-1/
 ## Cluster
 
 - **Type**: k3d (k3s in Docker), running on Mac via OrbStack
-- **Cluster name**: `home-1` — kubectl context is `k3d-home-1`
+- **Cluster name**: `local-cluster-1` — kubectl context is `k3d-local-cluster-1`
 - **Nodes**: 1 server, SQLite datastore (correct for single-node personal use — do not change to etcd)
-- **Persistent data**: stored at `~/k3d-data/home-1/` on the host, outside this repo
+- **Persistent data**: stored at `~/k3d-data/local-cluster-1/` on the host, outside this repo
 - **Auto-start**: launchd agent (`com.samay.k3d-home`) starts the cluster on login
 
 ### Cluster management scripts (`infra/scripts/infra-setup/`)
@@ -49,23 +49,35 @@ kohli-home-mono-repo-1/
 | Script | Purpose |
 |--------|---------|
 | `create-cluster.sh` | One-time cluster creation with volume mounts and port mappings |
+| `install-argocd.sh` | Install ArgoCD via Helm (`argocd/install-argocd.sh`) |
+| `setup-secrets.sh` | Run all auto secret scripts (postgres, temporal, pgadmin); skips existing secrets |
+| `setup-repo-secret.sh` | Interactive — ArgoCD GitHub App repo credentials (`argocd/setup-repo-secret.sh`) |
 | `start-cluster.sh` | Start an existing stopped cluster |
 | `stop-cluster.sh` | Stop the cluster (data is preserved) |
 | `auto-start.sh` | Called by launchd on login; waits for Docker then starts cluster |
 | `install-autostart.sh` | Installs the launchd plist to `~/Library/LaunchAgents/` |
 
+Auto secret scripts live in `infra/scripts/infra-setup/secrets-auto-setup-scripts/`. Add new ones to the `AUTO_SECRET_SCRIPTS` list in `setup-secrets.sh`.
+
 ### Port mappings (fixed at cluster creation)
 
-| Port | Service |
-|------|---------|
-| 80 / 443 | Traefik ingress |
-| 5432 | PostgreSQL |
-| 7233 | Temporal gRPC (frontend) |
-| 8080 | Temporal Web UI |
-| 8233 | Temporal membership/metrics |
-| 5050 | PgAdmin |
+Two mapping strategies are in use:
+
+| Port | Strategy | Service |
+|------|----------|---------|
+| 80 / 443 | `@loadbalancer` | Traefik ingress (Temporal UI at `temporal.local`, PgAdmin at `pgadmin.local`) |
+| 30000–32767 | `@server:0` | Full Kubernetes NodePort range |
+
+**NodePort assignments** (memorable numbers within the range):
+
+| Host port | NodePort | Service |
+|-----------|----------|---------|
+| 30432 | 30432 | PostgreSQL primary (`postgres-cluster-1-nodeport` Service) |
+| 30233 | 30233 | Temporal gRPC frontend |
 
 Port mappings cannot be added after cluster creation. Use `kubectl port-forward` for ad-hoc access to unlisted ports.
+
+> **Note**: Exposing the full NodePort range causes Docker to create ~2768 proxy processes at cluster creation time — startup takes longer than usual. This is expected and acceptable for a local dev cluster.
 
 ## Deployed infrastructure (via Helm, in infra/)
 

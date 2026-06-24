@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/kohlifam/kohli-home-mono-repo-1
+    repoURL: https://github.com/ksamay-Budy/local-k8-cluster-1
     targetRevision: HEAD
     path: argocd/apps
     directory:
