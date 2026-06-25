@@ -16,7 +16,6 @@ AUTO_SECRET_SCRIPTS=(
   setup-postgres-secret.sh
   setup-temporal-secret.sh
   setup-pgadmin-secret.sh
-  setup-context-cluster-secret.sh
 )
 
 echo "=== Auto secret setup ==="
