@@ -61,23 +61,22 @@ Auto secret scripts live in `infra/scripts/infra-setup/secrets-auto-setup-script
 
 ### Port mappings (fixed at cluster creation)
 
-Two mapping strategies are in use:
-
 | Port | Strategy | Service |
 |------|----------|---------|
 | 80 / 443 | `@loadbalancer` | Traefik ingress (Temporal UI at `temporal.local`, PgAdmin at `pgadmin.local`) |
-| 30000–32767 | `@server:0` | Full Kubernetes NodePort range |
+| 30230–30249 | `@server:0` | Temporal gRPC frontend range (active: 30233) |
+| 30430–30449 | `@server:0` | PostgreSQL primary range (active: 30432) |
 
-**NodePort assignments** (memorable numbers within the range):
+**Assigned NodePorts:**
 
 | Host port | NodePort | Service |
 |-----------|----------|---------|
 | 30432 | 30432 | PostgreSQL primary (`postgres-cluster-1-nodeport` Service) |
 | 30233 | 30233 | Temporal gRPC frontend |
 
-Port mappings cannot be added after cluster creation. Use `kubectl port-forward` for ad-hoc access to unlisted ports.
+Port mappings cannot be added after cluster creation. Use `kubectl port-forward` for ad-hoc access to any port outside these ranges.
 
-> **Note**: Exposing the full NodePort range causes Docker to create ~2768 proxy processes at cluster creation time — startup takes longer than usual. This is expected and acceptable for a local dev cluster.
+> **Note**: The full 30000–32767 range was previously used but caused k3d cluster creation to fail (`bufio.Scanner: token too long` — nginx config exceeded the 64 KB scanner buffer). Two small 10-port windows are used instead.
 
 ## Deployed infrastructure (via Helm, in infra/)
 

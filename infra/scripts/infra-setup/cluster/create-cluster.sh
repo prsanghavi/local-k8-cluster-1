@@ -35,11 +35,18 @@ fi
 #   → All PVCs using the default 'local-path' StorageClass will land here.
 #
 # Ports:
-#   80/443         → Traefik ingress (HTTP/HTTPS) via loadbalancer
-#   30000-32767    → Full Kubernetes NodePort range via server node
-#                    Docker spawns one proxy per port (~2768 processes); cluster
-#                    creation takes longer than usual — this is expected for a dev cluster.
-#                    Services use memorable NodePorts: Postgres=30432, Temporal gRPC=30233
+#   80/443   → Traefik ingress (HTTP/HTTPS) via loadbalancer
+#   30432    → PostgreSQL primary NodePort (postgres-cluster-1-nodeport)
+#   30233    → Temporal gRPC frontend NodePort
+#
+# NOTE: The full 30000-32767 NodePort range is intentionally NOT mapped here.
+# Mapping the entire range caused k3d to fail with "bufio.Scanner: token too long"
+# because nginx's startup log line exceeded the 64 KB scanner buffer when
+# configured for ~2768 ports. Use `kubectl port-forward` for any other NodePorts.
+#
+# Two small ranges are mapped, one around each assigned NodePort:
+#   30230-30249  → Temporal gRPC frontend (30233)
+#   30430-30449  → PostgreSQL primary (30432)
 k3d cluster create "$CLUSTER_NAME" \
   --servers 1 \
   --agents 0 \
@@ -47,7 +54,8 @@ k3d cluster create "$CLUSTER_NAME" \
   --volume "$DATA_DIR:/var/lib/rancher/k3s/storage@server:0" \
   --port "80:80@loadbalancer" \
   --port "443:443@loadbalancer" \
-  --port "30000-32767:30000-32767@server:0" \
+  --port "30230-30249:30230-30249@server:0" \
+  --port "30430-30449:30430-30449@server:0" \
   --k3s-arg "--tls-san=host.k3d.internal@server:0" \
   --wait
 
