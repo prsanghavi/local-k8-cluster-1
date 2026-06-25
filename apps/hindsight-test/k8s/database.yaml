@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: hindsight-test
+  namespace: postgres
+spec:
+  name: hindsight_test
+  owner: homeuser
+  cluster:
+    name: postgres-cluster-1

@@ -1,0 +1,73 @@
+# Hindsight Helm Values Override for Test Environment
+version: "0.8.3"
+
+api:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  env:
+    HINDSIGHT_API_LLM_PROVIDER: "openai"
+    HINDSIGHT_API_LLM_MODEL: "gpt-4o-mini"
+
+controlPlane:
+  enabled: true
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Disable bundled PostgreSQL subchart
+postgresql:
+  enabled: false
+  external:
+    host: "postgres-cluster-1-rw.postgres.svc.cluster.local"
+    port: 5432
+    database: "hindsight_test"
+    username: "homeuser"
+
+# Reference the existing secret created by setup-secrets.sh
+existingSecret: "hindsight-credentials"
+
+# Enable local MiniLM text embedding sidecar
+tei:
+  embedding:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: ghcr.io/huggingface/text-embeddings-inference
+      tag: cpu-1.8.3
+    model: "sentence-transformers/all-MiniLM-L6-v2"
+    port: 8091
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# Traefik Ingress routing for host access
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  hosts:
+    - host: hindsight-test.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: controlPlane
+        - path: /api
+          pathType: Prefix
+          service: api

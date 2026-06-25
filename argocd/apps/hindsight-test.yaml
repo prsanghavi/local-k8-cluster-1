@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hindsight-test
+  namespace: argocd
+  annotations:
+    # Wave 4, after postgres (2)
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: oci://ghcr.io/vectorize-io/charts
+      chart: hindsight
+      targetRevision: "0.8.3"
+      helm:
+        valueFiles:
+          - $values/apps/hindsight-test/values.yaml
+
+    - repoURL: https://github.com/ksamay-Budy/local-k8-cluster-1
+      targetRevision: HEAD
+      ref: values
+      path: apps/hindsight-test/k8s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hindsight-test
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
