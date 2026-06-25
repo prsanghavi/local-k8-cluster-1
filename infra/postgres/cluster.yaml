@@ -55,3 +55,13 @@ spec:
         # Create with: ./infra/scripts/infra-setup/setup-secrets.sh
         passwordSecret:
           name: temporal-db-credentials
+
+      - name: context_cluster_file_user
+        ensure: present
+        login: true
+        superuser: false
+        createdb: false
+        # Secret keys: username, password
+        # Create with: ./infra/scripts/infra-setup/secrets-auto-setup-scripts/setup-context-cluster-secret.sh
+        passwordSecret:
+          name: context-cluster-file-db-credentials
