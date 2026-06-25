@@ -19,7 +19,7 @@ spec:
         valueFiles:
           - $values/infra/pgadmin/values.yaml
 
-    - repoURL: https://github.com/ksamay-Budy/local-k8-cluster-1
+    - repoURL: https://github.com/prsanghavi/local-k8-cluster-1
       targetRevision: HEAD
       ref: values
 

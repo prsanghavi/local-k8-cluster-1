@@ -1,16 +1,16 @@
 #!/bin/bash
-# Creates the ArgoCD GitHub App credential template for the ksamay-Budy org.
+# Creates the ArgoCD GitHub App credential template for the prsanghavi org.
 # This is a repo-creds secret — a wildcard that covers all repos under
-# https://github.com/ksamay-Budy without needing per-repo secrets.
+# https://github.com/prsanghavi without needing per-repo secrets.
 #
 # Run after install-argocd.sh.
 set -euo pipefail
 
 NAMESPACE="argocd"
 SECRET_NAME="github-app-repo-creds-1"
-ORG_URL="https://github.com/ksamay-Budy"
-APP_ID="4137800"
-INSTALLATION_ID="142432849"
+ORG_URL="https://github.com/prsanghavi"
+APP_ID="4147919"
+INSTALLATION_ID="142650815"
 
 echo "=== ArgoCD GitHub App repo credentials ==="
 echo "Org:             $ORG_URL"
@@ -67,4 +67,4 @@ kubectl rollout status  deployment argocd-server        -n "$NAMESPACE" --timeou
 kubectl rollout status  deployment argocd-repo-server   -n "$NAMESPACE" --timeout=90s
 
 echo ""
-echo "✓ Done. ArgoCD can now access all ksamay-Budy repos."
+echo "✓ Done. ArgoCD can now access all prsanghavi repos."
