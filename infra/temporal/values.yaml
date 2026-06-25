@@ -53,9 +53,11 @@ server:
       create: true
       namespace:
         - name: default
-          retention: 30d
-        - name: finance-ns-1
-          retention: 30d
+          retention: 7d
+        - name: context-cluster-ns-1
+          retention: 7d
+        - name: dt-ns-1
+          retention: 7d
 
 admintools:
   enabled: true

@@ -11,7 +11,7 @@ NAMESPACE="argocd"
 RELEASE="argocd"
 CHART="argo/argo-cd"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 VALUES_FILE="$REPO_ROOT/infra/argocd/values.yaml"
 
 if [ ! -f "$VALUES_FILE" ]; then
