@@ -11,7 +11,7 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: oci://ghcr.io/vectorize-io/charts
+    - repoURL: oci://ghcr.io/vectorize-io/charts/hindsight
       chart: hindsight
       targetRevision: "0.8.3"
       helm:
