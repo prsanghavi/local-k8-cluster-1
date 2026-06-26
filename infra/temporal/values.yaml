@@ -2,6 +2,20 @@
 # Chart: temporalio/temporal 1.2.0
 # Reference: https://github.com/temporalio/helm-charts/blob/temporal-1.2.0/charts/temporal/values/values.postgresql.yaml
 
+extraObjects:
+  - |
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: temporal-web-auth
+    spec:
+      headers:
+        customRequestHeaders:
+          # Local PoC only.
+          # Replace this placeholder with a JWT minted from the temporal-web role
+          # using permissions ["temporal-system:admin"].
+          Authorization: "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjJqNXBWQ3BJOGo4UUc0ME9ZbklfdUI4c2JrVSIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ0ZW1wb3JhbCIsImV4cCI6MTc4MjQ5NDEzNywiaWF0IjoxNzgyNDkwNTM3LCJpc3MiOiJodHRwOi8vdmF1bHQubG9jYWwvdjEvand0IiwianRpIjoiMjVVTEg2MnBKdllSQ3RsbVhFTzlFTCIsIm5iZiI6MTc4MjQ5MDUzNywicGVybWlzc2lvbnMiOlsidGVtcG9yYWwtc3lzdGVtOmFkbWluIl0sInN1YiI6InN2Yzp0ZW1wb3JhbC13ZWIifQ.ivj4wZdJh9QG-tne3pggju4boQbku55JMI9YOlwAiUycdV6zC6bAhxzU4iQ2TlqmrHt4Ac2LO6WWlAZounUcdCb2EDZ_EyfYK5o4_0nM-iMKoHsCG9Eu0DFuv0QYA8xDxTABYeAUWEQbk230U6DdMBcxAoiWj-SBMj212HuHetPXUL8FsJTdJUxuqPKWk4edYYYlPiddXV_r7yGrRUVEQycAgT2yhDktt9d_gPy51GR4VI2AJt1cioiowQlNiEgBbKx6HP9jU9N-9rGqBhQfaYrBLMTG9Ya3gM1Ei6MtiTZB5zHYego9_QzcFLR2VWQCfmotqBQvqq9_bPOEFH7CoQ"
+
 server:
   replicaCount: 1
 
@@ -92,6 +106,7 @@ web:
     className: traefik
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: web
+      traefik.ingress.kubernetes.io/router.middlewares: temporal-temporal-web-auth@kubernetescrd
     hosts:
       - "temporal.local"
 
