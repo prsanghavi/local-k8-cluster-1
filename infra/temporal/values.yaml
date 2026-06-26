@@ -13,6 +13,12 @@ server:
       port: 7233
       nodePort: 30233
 
+  internal-frontend:
+    # Split internal Temporal service-to-service traffic from external SDK traffic.
+    # The chart will create a dedicated ClusterIP service on 7236 and wire server
+    # components to use it when enabled.
+    enabled: true
+
   config:
     persistence:
       defaultStore: default
