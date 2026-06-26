@@ -9,6 +9,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `postgres/` | Helm values + ArgoCD app for PostgreSQL |
 | `pgadmin/` | Helm values + ArgoCD app for PgAdmin |
 | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
+| `vault/` | Helm values + ArgoCD app for local Vault + JWT plugin |
 | `scripts/infra-setup/` | k3d cluster lifecycle scripts (create, start, stop, auto-start, secrets) |
 
 ## Services
@@ -18,6 +19,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `postgres/` | bitnami/postgresql | `postgres` |
 | `pgadmin/` | runix/pgadmin4 | `pgadmin` |
 | `temporal/` | temporal/temporal | `temporal` |
+| `vault/` | hashicorp/vault | `vault` |
 
 ## Structure per service
 

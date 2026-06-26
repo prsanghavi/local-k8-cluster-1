@@ -69,3 +69,6 @@ kubectl apply -f argocd/root-app.yaml
 | 5050 | PgAdmin |
 
 > **Note:** Port mappings are fixed at cluster creation time. Add any new ports to `create-cluster.sh` before running it, or use `kubectl port-forward` for one-off access.
+
+Local ingress hostnames configured in `/etc/hosts`:
+`argocd.local`, `temporal.local`, `pgadmin.local`, `vault.local`

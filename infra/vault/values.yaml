@@ -1,0 +1,90 @@
+# Vault Helm values — local-cluster-1 cluster
+# Chart: hashicorp/vault 0.33.0
+# Reference: infra/vault/default.values.yaml
+
+injector:
+  enabled: false
+
+server:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  dev:
+    enabled: true
+    # Local-only root token for startup automation and UI login.
+    devRootToken: "root"
+
+  # Dev mode needs the plugin directory passed as a startup arg.
+  extraArgs: "-dev-plugin-dir=/usr/local/libexec/vault"
+
+  volumes:
+    - name: plugins
+      emptyDir: {}
+
+  volumeMounts:
+    - name: plugins
+      mountPath: /usr/local/libexec/vault
+
+  extraInitContainers:
+    - name: vault-plugin-secrets-jwt
+      image: quay.io/curl/curl:8.20.0
+      command:
+        - /bin/sh
+        - -ec
+      args:
+        - |
+          set -euo pipefail
+
+          VERSION="1.0.0-beta.5"
+
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            x86_64) ASSET="vault-plugin-secrets-jwt_${VERSION}_linux_amd64" ;;
+            aarch64|arm64) ASSET="vault-plugin-secrets-jwt_${VERSION}_linux_arm64" ;;
+            *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;;
+          esac
+
+          cd /usr/local/libexec/vault
+          curl -fsSL "https://github.com/outfoxx/vault-plugin-secrets-jwt/releases/download/v${VERSION}/${ASSET}" -o vault-plugin-secrets-jwt
+          chmod 0755 vault-plugin-secrets-jwt
+      volumeMounts:
+        - name: plugins
+          mountPath: /usr/local/libexec/vault
+
+  postStart:
+    - /bin/sh
+    - -ec
+    - |
+      export VAULT_ADDR="http://127.0.0.1:8200"
+      export VAULT_TOKEN="root"
+
+      for _ in $(seq 1 60); do
+        vault status >/dev/null 2>&1 && break
+        sleep 2
+      done
+
+      SHA="$(sha256sum /usr/local/libexec/vault/vault-plugin-secrets-jwt | awk '{print $1}')"
+
+      vault plugin list -format=json 2>/dev/null | grep -q '"vault-plugin-secrets-jwt"' || \
+        vault plugin register -sha256="${SHA}" secret vault-plugin-secrets-jwt
+
+      vault secrets list -format=json 2>/dev/null | grep -q '"jwt/"' || \
+        vault secrets enable -path=jwt -plugin-name=vault-plugin-secrets-jwt plugin
+
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    hosts:
+      - host: vault.local
+        paths:
+          - /
+
+ui:
+  enabled: true
