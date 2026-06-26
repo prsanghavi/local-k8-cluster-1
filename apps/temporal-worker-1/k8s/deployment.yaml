@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: temporal-worker-1
-          image: k3d-registry:5000/temporal-worker-1:2a3e091
+          image: k3d-registry:5000/temporal-worker-1:0a56631
           imagePullPolicy: Always
           env:
             - name: TEMPORAL_HOST
