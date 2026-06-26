@@ -20,6 +20,15 @@ server:
     enabled: true
 
   config:
+    authorization:
+      jwtKeyProvider:
+        keySourceURIs:
+          - "http://vault.vault.svc.cluster.local:8200/v1/jwt/jwks"
+        refreshInterval: 5m
+      permissionsClaimName: permissions
+      authorizer: default
+      claimMapper: default
+
     persistence:
       defaultStore: default
       visibilityStore: visibility
