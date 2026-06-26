@@ -4,4 +4,5 @@ kind: Kustomization
 namespace: temporal
 
 resources:
+  - serviceaccount.yaml
   - deployment.yaml

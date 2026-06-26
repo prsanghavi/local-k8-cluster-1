@@ -15,6 +15,7 @@ spec:
       labels:
         app: temporal-worker-1
     spec:
+      serviceAccountName: temporal-worker-1
       containers:
         - name: temporal-worker-1
           image: k3d-registry:5000/temporal-worker-1:0a56631
