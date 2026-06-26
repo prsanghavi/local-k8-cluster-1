@@ -85,6 +85,8 @@ web:
   additionalEnv:
     - name: TEMPORAL_CSRF_COOKIE_INSECURE
       value: "true"
+    - name: TEMPORAL_FORWARD_HEADERS
+      value: "authorization"
   ingress:
     enabled: true
     className: traefik
