@@ -60,6 +60,13 @@ ArgoCD auto-syncs from `HEAD` — the updated `deployment.yaml` image tag trigge
 | `TEMPORAL_HOST` | `temporal-frontend.temporal.svc.cluster.local:7233` | Temporal frontend gRPC address |
 | `TEMPORAL_NAMESPACE` | `default` | Temporal namespace |
 | `TEMPORAL_TASK_QUEUE` | `main` | Task queue this worker listens on |
+| `TEMPORAL_USE_VAULT_AUTH` | `false` | If true, mint Temporal JWTs from Vault using Kubernetes auth |
+| `VAULT_ADDR` | `http://vault.vault.svc.cluster.local:8200` | In-cluster Vault API address |
+| `VAULT_K8S_AUTH_PATH` | `auth/kubernetes` | Vault Kubernetes auth mount |
+| `VAULT_K8S_ROLE` | `temporal-worker-1` | Vault Kubernetes auth role name |
+| `VAULT_JWT_SIGN_ROLE` | `temporal-worker-1` | Vault JWT role used for `jwt/sign/<role>` |
+| `VAULT_JWT_AUDIENCE` | `temporal` | `aud` claim on minted Temporal JWTs |
+| `VAULT_JWT_SUBJECT` | `svc:temporal-worker-1` | `sub` claim on minted Temporal JWTs |
 
 ## Important conventions
 

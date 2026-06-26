@@ -18,7 +18,7 @@ spec:
       serviceAccountName: temporal-worker-1
       containers:
         - name: temporal-worker-1
-          image: k3d-registry:5000/temporal-worker-1:0a56631
+          image: k3d-registry:5000/temporal-worker-1:f2bbfb7
           imagePullPolicy: Always
           env:
             - name: TEMPORAL_HOST
@@ -27,6 +27,20 @@ spec:
               value: "default"
             - name: TEMPORAL_TASK_QUEUE
               value: "temporal-worker-1-queue"
+            - name: TEMPORAL_USE_VAULT_AUTH
+              value: "true"
+            - name: VAULT_ADDR
+              value: "http://vault.vault.svc.cluster.local:8200"
+            - name: VAULT_K8S_AUTH_PATH
+              value: "auth/kubernetes"
+            - name: VAULT_K8S_ROLE
+              value: "temporal-worker-1"
+            - name: VAULT_JWT_SIGN_ROLE
+              value: "temporal-worker-1"
+            - name: VAULT_JWT_AUDIENCE
+              value: "temporal"
+            - name: VAULT_JWT_SUBJECT
+              value: "svc:temporal-worker-1"
           resources:
             requests:
               cpu: "100m"

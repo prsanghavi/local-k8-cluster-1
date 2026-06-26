@@ -30,6 +30,40 @@ pip install -e ..   # installs from pyproject.toml
 TEMPORAL_HOST=localhost:7233 python worker.py
 ```
 
+When Temporal auth is enabled, you can still provide a bearer token manually with either:
+
+```bash
+TEMPORAL_AUTH_TOKEN="<jwt>" python worker.py
+```
+
+or:
+
+```bash
+TEMPORAL_AUTH_TOKEN_FILE=/path/to/token.txt python worker.py
+```
+
+## Vault minting via service account
+
+In-cluster, the worker is configured to mint its own Temporal JWT from Vault by:
+
+1. reading the pod's Kubernetes service account token
+2. logging into Vault Kubernetes auth
+3. calling `jwt/sign/<role>` to mint a Temporal JWT
+4. refreshing that JWT before it expires
+
+The deployment enables this with:
+
+```bash
+TEMPORAL_USE_VAULT_AUTH=true
+VAULT_ADDR=http://vault.vault.svc.cluster.local:8200
+VAULT_K8S_AUTH_PATH=auth/kubernetes
+VAULT_K8S_ROLE=temporal-worker-1
+VAULT_JWT_SIGN_ROLE=temporal-worker-1
+```
+
+Vault still needs a Kubernetes auth role and policy that allow the worker service
+account to authenticate and call `jwt/sign/temporal-worker-1`.
+
 ## Structure
 
 ```
