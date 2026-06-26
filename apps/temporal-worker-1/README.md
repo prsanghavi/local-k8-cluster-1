@@ -62,7 +62,9 @@ VAULT_JWT_SIGN_ROLE=temporal-worker-1
 ```
 
 Vault still needs a Kubernetes auth role and policy that allow the worker service
-account to authenticate and call `jwt/sign/temporal-worker-1`.
+account to authenticate and call `jwt/sign/temporal-worker-1`. See
+[`infra/vault/README.md`](/Users/pratiksanghavi/Desktop/experiments/local-k8-cluster-1/infra/vault/README.md:1)
+for the Vault-side setup steps.
 
 ## Structure
 

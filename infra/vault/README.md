@@ -172,6 +172,78 @@ Later, Temporal's `authorization.jwtKeyProvider` should trust this JWKS source.
 From inside the cluster, Temporal should use the in-cluster Vault service URL,
 not `vault.local`.
 
+## Enable Vault Kubernetes auth for the worker
+
+The Temporal worker does not use the Vault `root` token at runtime.
+Instead, it:
+
+1. reads its Kubernetes service account token
+2. logs into Vault at `auth/kubernetes/login`
+3. receives a short-lived Vault token
+4. uses that Vault token to call `jwt/sign/temporal-worker-1`
+
+### Enable the auth method
+
+```bash
+vault auth enable kubernetes
+```
+
+### Configure Kubernetes auth
+
+Use the Vault pod's own service account token as the token reviewer JWT:
+
+```bash
+VAULT_POD=$(kubectl -n vault get pod -l app.kubernetes.io/name=vault,component=server -o jsonpath='{.items[0].metadata.name}')
+TOKEN_REVIEW_JWT=$(kubectl -n vault exec "$VAULT_POD" -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+KUBE_CA_CERT=$(kubectl -n vault exec "$VAULT_POD" -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)
+vault write auth/kubernetes/config \
+  kubernetes_host="https://kubernetes.default.svc.cluster.local" \
+  token_reviewer_jwt="$TOKEN_REVIEW_JWT" \
+  kubernetes_ca_cert="$KUBE_CA_CERT"
+```
+
+### Create a policy that can mint the Temporal worker JWT
+
+```bash
+printf 'path "jwt/sign/temporal-worker-1" {\n  capabilities = ["update"]\n}\n' | vault policy write temporal-worker-1 -
+```
+
+### Bind the worker service account to that policy
+
+```bash
+vault write auth/kubernetes/role/temporal-worker-1 \
+  bound_service_account_names=temporal-worker-1 \
+  bound_service_account_namespaces=temporal \
+  policies=temporal-worker-1 \
+  ttl=1h
+```
+
+Read the role back to verify it:
+
+```bash
+vault read auth/kubernetes/role/temporal-worker-1
+```
+
+Expected output includes:
+
+- `bound_service_account_names = [temporal-worker-1]`
+- `bound_service_account_namespaces = [temporal]`
+- `policies = [temporal-worker-1]`
+
+## Validate the end-to-end worker flow
+
+After the worker image with Vault minting support is deployed, it should:
+
+- log into Vault using service account `temporal-worker-1`
+- mint a Temporal JWT from `jwt/sign/temporal-worker-1`
+- connect successfully to Temporal without a manually supplied bearer token
+
+If it fails before Temporal startup, check:
+
+- `vault auth list`
+- `vault read auth/kubernetes/config`
+- `vault read auth/kubernetes/role/temporal-worker-1`
+
 ## Notes
 
 - `jwt/` is a Vault secrets engine, not Vault's `auth/jwt` auth method.
