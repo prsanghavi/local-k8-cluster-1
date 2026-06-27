@@ -1,6 +1,3 @@
-image:
-  repository: 745404749629.dkr.ecr.us-west-2.amazonaws.com/ob1-ecr-docker-hub-v1/temporalio/temporal-worker-controller
-
 serviceAccount:
   name: ob1-acd-eks-temporal-worker-controller-sa-1
 
