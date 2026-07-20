@@ -1,0 +1,188 @@
+image:
+  repository: temporalio/temporal-worker-controller
+  tag: "" # Defaults to Chart.appVersion if not specified
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+podAnnotations: {}
+  # Additional pod annotations can be added here
+# example:
+#   custom.annotation: value
+
+podLabels: {}
+  # Additional pod labels can be added here
+  # example:
+#   custom.label: value
+
+# Configure the resources accordingly based on the project requirements.
+# More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+terminationGracePeriodSeconds: 10
+
+# Optional Pod priority scheduling. Prefer priorityClassName (references a
+# cluster PriorityClass). Set priority only when you need an explicit integer;
+# see https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+# priority: 1000
+priorityClassName: ""
+
+# All RBAC will be applied under this service account in
+# the deployment namespace. You may disable creation of this resource
+# if your manager will use a service account that exists at
+# runtime. Be sure to update serviceAccount.name if changing
+# service account names.
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  # restrictWatchNamespaces keeps the namespaces the controller watches and the
+  # namespaces its RBAC grants access to in sync. Empty (the default) watches all
+  # namespaces with cluster-wide RBAC. When set, the controller watches only these
+  # namespaces (via WATCH_NAMESPACES) and is granted the manager role through a
+  # RoleBinding in each listed namespace, plus a minimal cluster-scoped role for the
+  # two grants that cannot be namespaced (namespaces get, subjectaccessreviews create).
+  restrictWatchNamespaces: []
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated.
+  name:
+
+# Project a short-lived token for the manager's ServiceAccount and make it
+# available to Temporal client connections that do not use mTLS or an API key.
+serviceAccountToken:
+  # Enables the projected token volume and TEMPORAL_SERVICE_ACCOUNT_TOKEN_PATH.
+  enabled: false
+  # The intended audience for the projected token. Required when enabled.
+  audience: ""
+
+# For common cases that do not require escalating privileges it is recommended to ensure that
+# all your Pods/Containers are restrictive.
+# More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+# Please enable the following if your project does NOT have to work on old Kubernetes versions < 1.19
+# or on vendors versions which do NOT support this field by default (i.e. Openshift < 4.11 ).
+securityContext:
+  seccompProfile:
+    enabled: false
+
+# podSecurityContext overrides the default pod-level securityContext entirely when set.
+# If empty (default), the chart uses the legacy behavior above (runAsNonRoot: true +
+# optional seccompProfile toggle).
+# Example for restricted Pod Security Standards / Kyverno compliance:
+#   podSecurityContext:
+#     runAsNonRoot: true
+#     runAsUser: 65532
+#     runAsGroup: 65532
+#     fsGroup: 65532
+#     seccompProfile:
+#       type: RuntimeDefault
+podSecurityContext: {}
+
+# containerSecurityContext overrides the default container-level securityContext for both
+# the manager and kube-rbac-proxy containers when set. If empty (default), the chart uses
+# the legacy behavior (allowPrivilegeEscalation: false + capabilities.drop: ALL).
+# Example for restricted Pod Security Standards / Kyverno compliance:
+#   containerSecurityContext:
+#     allowPrivilegeEscalation: false
+#     readOnlyRootFilesystem: true
+#     runAsGroup: 65532
+#     seccompProfile:
+#       type: RuntimeDefault
+#     capabilities:
+#       drop:
+#         - "ALL"
+containerSecurityContext: {}
+
+# Default podAntiAffinity uses preferredDuringSchedulingIgnoredDuringExecution to spread manager
+# pods across nodes. For strict HA, switch to requiredDuringSchedulingIgnoredDuringExecution.
+affinity: {}
+
+# More than one replica is required for high availability.
+replicas: 2
+
+# deprecated. disable authenticated metrics endpoint access with the
+# metrics.disableAuth value.
+authProxy:
+  enabled: true
+
+metrics:
+  enabled: true
+  port: 8080
+  # Set to true if you want your controller-manager to expose the /metrics
+  # endpoint w/o any authn/z.
+  #
+  # If false (the default), a kube-rbac-proxy sidecar
+  # (https://github.com/brancz/kube-rbac-proxy) is injected into the manager
+  # pod. It listens on HTTPS port 8443 and proxies to the manager's metrics
+  # endpoint on localhost, authorizing each request via Kubernetes
+  # SubjectAccessReviews. The manager binds metrics to 127.0.0.1 so it is only
+  # reachable through the proxy.
+  #
+  # Set to true when network-level controls already restrict access
+  # (NetworkPolicy, service mesh, same-namespace Prometheus), your scraper
+  # cannot present a bearer token, or simplicity is preferred (e.g.
+  # dev/staging).
+  disableAuth: false
+
+namespace:
+  create: false
+
+webhook:
+  # enabled controls the optional WorkerDeployment validating webhook.
+  # The WorkerResourceTemplate validating webhook is always enabled and does
+  # not require this flag.
+  enabled: false
+  port: 9443
+  certDir: /tmp/k8s-webhook-server/serving-certs
+
+# Configuration for WorkerResourceTemplate objects.
+workerResourceTemplate:
+  # allowedResources defines which resource kinds may be embedded in WRT objects.
+  # The webhook rejects any kind not listed here, and the controller is granted RBAC
+  # to manage exactly these resource types. An empty list rejects all kinds — at
+  # least one entry must be configured.
+  #
+  # Each entry has three fields:
+  #   kinds:      kind names the webhook will accept (case-insensitive)
+  #   apiGroups:  API groups for the controller's RBAC policy
+  #   resources:  resource names for the controller's RBAC policy
+  #
+  allowedResources:
+    # HPA (autoscaling/v1 and autoscaling/v2 share the same API group)
+    - kinds: ["HorizontalPodAutoscaler"]
+      apiGroups: ["autoscaling"]
+      resources: ["horizontalpodautoscalers"]
+
+certmanager:
+  # install controls whether cert-manager is installed as a Helm subchart.
+  # Set to true if cert-manager is not already installed in the cluster.
+  # See https://cert-manager.io/docs/installation/
+  install: false
+
+  # enabled controls creation of the cert-manager Issuer and Certificate used for
+  # webhook TLS. cert-manager must be installed in the cluster (either via the
+  # subchart above or separately).
+  # Set to false only if you are providing your own TLS certificate (see caBundle below).
+  enabled: true
+
+  # caBundle is only used when enabled: false (i.e. you are managing webhook TLS yourself).
+  # Set this to the base64-encoded PEM CA certificate that signed the TLS certificate in
+  # the "webhook-server-cert" Secret. The Kubernetes API server uses this to verify the
+  # webhook server's TLS certificate.
+  # Leave empty when enabled: true — cert-manager injects the CA bundle automatically.
+  caBundle: ""
+
+# Not yet supported
+prometheus:
+  enabled: false
+
+nodeSelector: {}
+
+tolerations: []

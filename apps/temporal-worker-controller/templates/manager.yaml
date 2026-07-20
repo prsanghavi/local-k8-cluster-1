@@ -1,0 +1,213 @@
+{{- if .Values.namespace.create -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/component: manager
+    {{- include "temporal-worker-controller.labels" . | nindent 4 }}
+  name: {{ .Release.Name }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: manager
+    {{- include "temporal-worker-controller.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "temporal-worker-controller.selectorLabels" . | nindent 6 }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/component: manager
+        {{- include "temporal-worker-controller.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.affinity }}
+      affinity:
+{{ toYaml .Values.affinity | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+{{ include "temporal-worker-controller.selectorLabels" . | nindent 20 }}
+                topologyKey: kubernetes.io/hostname
+      {{- end }}
+      {{- if .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsNonRoot: true
+        {{- if .Values.securityContext.seccompProfile.enabled }}
+        seccompProfile:
+          type: RuntimeDefault
+        {{- end }}
+      {{- end }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . | quote }}
+      {{- end }}
+      {{- if and (hasKey .Values "priority") (ne .Values.priority nil) }}
+      priority: {{ .Values.priority }}
+      {{- end }}
+      containers:
+      - name: manager
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default (printf "v%s" .Chart.AppVersion)}}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: CONTROLLER_IDENTITY
+          value: "{{ .Release.Name }}/{{ .Release.Namespace }}"
+        - name: CONTROLLER_VERSION
+          value: "{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- if .Values.serviceAccountToken.enabled }}
+        - name: TEMPORAL_SERVICE_ACCOUNT_TOKEN_PATH
+          value: /var/run/secrets/temporal.io/token
+        {{- end }}
+        # POD_NAMESPACE and SERVICE_ACCOUNT_NAME are populated automatically by
+        # Kubernetes from the pod's own metadata (namespace and service account name).
+        # The validating webhook reads them to perform SubjectAccessReview checks
+        # using the controller's identity.
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SERVICE_ACCOUNT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        # ALLOWED_KINDS controls which resource kinds are accepted by the
+        # WorkerResourceTemplate validating webhook. Derived from
+        # workerResourceTemplate.allowedResources[*].kinds in values.yaml.
+        # An empty value rejects all kinds — at least one must be configured.
+        {{- $allKinds := list -}}
+        {{- range .Values.workerResourceTemplate.allowedResources -}}
+          {{- range .kinds -}}
+            {{- $allKinds = append $allKinds . -}}
+          {{- end -}}
+        {{- end }}
+        - name: ALLOWED_KINDS
+          value: {{ join "," $allKinds | quote }}
+        {{- with .Values.rbac.restrictWatchNamespaces }}
+        - name: WATCH_NAMESPACES
+          value: {{ join "," . | quote }}
+        {{- end }}
+        args:
+        - --leader-elect
+        {{- if .Values.metrics.enabled }}
+        {{- if .Values.metrics.disableAuth }}
+        - "--metrics-bind-address=:{{ .Values.metrics.port }}"
+        {{- else }}
+        - "--metrics-bind-address=127.0.0.1:{{ .Values.metrics.port }}"
+        {{- end }}
+        {{- end }}
+        - "--health-probe-bind-address=:8081"
+        ports:
+          - containerPort: {{ .Values.webhook.port }}
+            name: webhook-server
+            protocol: TCP
+        volumeMounts:
+          - mountPath: {{ .Values.webhook.certDir }}
+            name: cert
+            readOnly: true
+          {{- if .Values.serviceAccountToken.enabled }}
+          - mountPath: /var/run/secrets/temporal.io
+            name: temporal-service-account-token
+            readOnly: true
+          {{- end }}
+        {{- if .Values.containerSecurityContext }}
+        securityContext:
+          {{- toYaml .Values.containerSecurityContext | nindent 10 }}
+        {{- else }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      {{- if not .Values.metrics.disableAuth }}
+      - name: kube-rbac-proxy
+        {{- if .Values.containerSecurityContext }}
+        securityContext:
+          {{- toYaml .Values.containerSecurityContext | nindent 10 }}
+        {{- else }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+        {{- end }}
+        image: registry.k8s.io/kubebuilder/kube-rbac-proxy:v0.14.1
+        args:
+          - "--secure-listen-address=0.0.0.0:8443"
+          - --upstream=http://127.0.0.1:{{ .Values.metrics.port }}/
+          - "--logtostderr=true"
+          - "--v=0"
+        ports:
+          - containerPort: 8443
+            protocol: TCP
+            name: https
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
+      {{- end }}
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-cert
+        {{- if .Values.serviceAccountToken.enabled }}
+        - name: temporal-service-account-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: {{ .Values.serviceAccountToken.audience | quote }}
+                  path: token
+        {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (printf "%s-service-account" .Release.Name) }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

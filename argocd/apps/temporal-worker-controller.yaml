@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: temporal-worker-controller
+  namespace: argocd
+  annotations:
+    # Install after the Worker Controller CRDs are present.
+    argocd.argoproj.io/sync-wave: "6"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/prsanghavi/local-k8-cluster-1
+      targetRevision: HEAD
+      path: apps/temporal-worker-controller
+      helm:
+        valueFiles:
+          - $values/infra/temporal-worker-controller/values.yaml
+        values: |
+          image:
+            repository: k3d-registry:5000/temporal-worker-controller
+            tag: v1.8.0-token
+          serviceAccountToken:
+            enabled: true
+            audience: temporal
+
+    - repoURL: https://github.com/prsanghavi/local-k8-cluster-1
+      targetRevision: HEAD
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: temporal
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
