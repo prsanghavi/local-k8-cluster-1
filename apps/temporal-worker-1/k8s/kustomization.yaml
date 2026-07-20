@@ -5,4 +5,5 @@ namespace: temporal
 
 resources:
   - serviceaccount.yaml
+  - connection.yaml
   - deployment.yaml

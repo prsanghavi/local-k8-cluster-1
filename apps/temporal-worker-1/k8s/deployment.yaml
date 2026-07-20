@@ -1,15 +1,17 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: temporal.io/v1alpha1
+kind: WorkerDeployment
 metadata:
   name: temporal-worker-1
-  namespace: temporal
   labels:
     app: temporal-worker-1
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: temporal-worker-1
+  workerOptions:
+    connectionRef:
+      name: temporal
+    temporalNamespace: default
+  rollout:
+    strategy: AllAtOnce
   template:
     metadata:
       labels:
@@ -23,12 +25,10 @@ spec:
           env:
             - name: TEMPORAL_HOST
               value: "temporal-frontend.temporal.svc.cluster.local:7233"
-            - name: TEMPORAL_NAMESPACE
-              value: "default"
             - name: TEMPORAL_TASK_QUEUE
               value: "temporal-worker-1-queue"
             - name: TEMPORAL_USE_VAULT_AUTH
-              value: "true"
+              value: "false"
             - name: VAULT_ADDR
               value: "http://vault.vault.svc.cluster.local:8200"
             - name: VAULT_K8S_AUTH_PATH
