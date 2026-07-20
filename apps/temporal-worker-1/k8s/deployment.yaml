@@ -12,6 +12,9 @@ spec:
     temporalNamespace: default
   rollout:
     strategy: AllAtOnce
+  sunset:
+    scaledownDelay: 1h
+    deleteDelay: 24h
   template:
     metadata:
       labels:
