@@ -1,7 +1,9 @@
 # Temporal namespace and Nexus bootstrap
 
-This ArgoCD PostSync Job idempotently creates the logical Temporal namespaces
-and internal Nexus endpoints used by the local cluster.
+This ArgoCD-managed one-shot Job idempotently creates the logical Temporal
+namespaces and internal Nexus endpoints used by the local cluster. It is a
+regular Job rather than a sync hook so ArgoCD creates it during automated
+reconciliation.
 
 | Endpoint | Target namespace | Handler task queue |
 | --- | --- | --- |
