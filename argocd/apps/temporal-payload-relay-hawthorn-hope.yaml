@@ -1,11 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: temporal-worker-1
+  name: temporal-payload-relay-hawthorn-hope
   namespace: argocd
   annotations:
-    # After temporal server (wave 4)
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "7"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -13,13 +12,11 @@ spec:
   source:
     repoURL: https://github.com/prsanghavi/local-k8-cluster-1
     targetRevision: HEAD
-    path: apps/temporal-worker-1/k8s
+    path: apps/temporal-payload-relay/k8s/hawthorn-hope
   destination:
     server: https://kubernetes.default.svc
-    namespace: temporal
+    namespace: uo-bpo1-de-v2-hwhrn-hope-ns-1
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
