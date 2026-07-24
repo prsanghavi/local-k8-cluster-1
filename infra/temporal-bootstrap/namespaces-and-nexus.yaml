@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: temporal-bootstrap-namespaces-and-nexus
+  annotations:
+    # Run after the Temporal server is healthy. Recreating this hook on each
+    # sync keeps the logical namespaces and Nexus endpoints idempotently present.
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: temporalio/admin-tools:1.31.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              temporal_cmd() {
+                temporal --address "$TEMPORAL_ADDRESS" --tls=false "$@"
+              }
+
+              ensure_namespace() {
+                namespace="$1"
+                if temporal_cmd operator namespace describe --namespace "$namespace" >/dev/null 2>&1; then
+                  echo "Namespace $namespace already exists"
+                  return
+                fi
+                temporal_cmd operator namespace create --namespace "$namespace" --retention 168h
+              }
+
+              ensure_endpoint() {
+                endpoint="$1"
+                namespace="$2"
+                task_queue="$3"
+                if temporal_cmd operator nexus endpoint get --name "$endpoint" >/dev/null 2>&1; then
+                  echo "Nexus endpoint $endpoint already exists"
+                  return
+                fi
+                temporal_cmd operator nexus endpoint create \
+                  --name "$endpoint" \
+                  --target-namespace "$namespace" \
+                  --target-task-queue "$task_queue"
+              }
+
+              ensure_namespace "ob1-temporal-comms-cluster-1-ns-1"
+              ensure_namespace "ob1-temporal-llm-router-1-ns-1"
+              ensure_namespace "ob1-uo-temporal-budytest1-ns-1"
+              ensure_namespace "ob1-uo-temporal-hawthorn-ns-1"
+
+              ensure_endpoint \
+                "ob1-nexus-comms-cluster-1-endpoint-1" \
+                "ob1-temporal-comms-cluster-1-ns-1" \
+                "ob1-comms-nexus-queue-1"
+              ensure_endpoint \
+                "ob1-nexus-llm-cluster-1-endpoint-1" \
+                "ob1-temporal-llm-router-1-ns-1" \
+                "ob1-llm-router-nexus-queue-1"
+              ensure_endpoint \
+                "ob1-uo-temporal-budytest1-gilfoyletest1-1-1" \
+                "ob1-uo-temporal-budytest1-ns-1" \
+                "ob1-budytest1-nexus-queue-1"
+              ensure_endpoint \
+                "ob1-uo-temporal-hawthorn-hope-1-1" \
+                "ob1-uo-temporal-hawthorn-ns-1" \
+                "ob1-hawthorn-hope-nexus-queue-1"
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: temporal-frontend.temporal.svc.cluster.local:7233
