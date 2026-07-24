@@ -17,6 +17,7 @@ AUTO_SECRET_SCRIPTS=(
   setup-temporal-secret.sh
   setup-pgadmin-secret.sh
   setup-minio-secret.sh
+  setup-temporal-worker-minio-secrets.sh
 )
 
 echo "=== Auto secret setup ==="
