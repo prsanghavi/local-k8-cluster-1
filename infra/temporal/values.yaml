@@ -3,6 +3,11 @@
 # Reference: https://github.com/temporalio/helm-charts/blob/temporal-1.2.0/charts/temporal/values/values.postgresql.yaml
 
 server:
+  image:
+    repository: k3d-registry:5000/temporal-server
+    tag: bc41ca2
+    pullPolicy: IfNotPresent
+
   replicaCount: 1
 
   frontend:
