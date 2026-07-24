@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: uo-bpo1-de-v2-hwhrn-hope-ns-1
+resources:
+  - ../base
+patches:
+  - target:
+      kind: WorkerDeployment
+      name: temporal-payload-relay
+    patch: |-
+      - op: replace
+        path: /spec/workerOptions/temporalNamespace
+        value: ob1-uo-temporal-hawthorn-ns-1
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1/value
+        value: ob1-uo-temporal-hawthorn-ns-1
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2/value
+        value: ob1-hawthorn-hope-nexus-queue-1
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3/value
+        value: temporal-payload-relay-hawthorn-hope

@@ -1,0 +1,65 @@
+apiVersion: temporal.io/v1alpha1
+kind: WorkerDeployment
+metadata:
+  name: temporal-payload-relay
+  labels:
+    app: temporal-payload-relay
+spec:
+  replicas: 1
+  workerOptions:
+    connectionRef:
+      name: temporal
+    temporalNamespace: replace-me
+  rollout:
+    strategy: AllAtOnce
+  sunset:
+    scaledownDelay: 1h
+    deleteDelay: 24h
+  template:
+    metadata:
+      labels:
+        app: temporal-payload-relay
+    spec:
+      serviceAccountName: temporal-payload-relay
+      volumes:
+        - name: minio-credentials
+          secret:
+            secretName: temporal-worker-minio-credentials
+      containers:
+        - name: temporal-payload-relay
+          image: k3d-registry:5000/temporal-payload-relay:local
+          imagePullPolicy: Always
+          env:
+            - name: TEMPORAL_HOST
+              value: temporal-frontend.temporal.svc.cluster.local:7233
+            - name: TEMPORAL_NAMESPACE
+              value: replace-me
+            - name: TEMPORAL_TASK_QUEUE
+              value: replace-me
+            - name: TEMPORAL_WORKER_IDENTITY
+              value: replace-me
+            - name: EXTERNAL_PAYLOAD_STORAGE_ENDPOINT
+              value: http://minio.minio.svc.cluster.local:9000
+            - name: EXTERNAL_PAYLOAD_STORAGE_REGION
+              value: us-east-1
+            - name: EXTERNAL_PAYLOAD_STORAGE_BUCKET
+              value: temporal-worker-payloads
+            - name: EXTERNAL_PAYLOAD_STORAGE_THRESHOLD_BYTES
+              value: "262144"
+            - name: EXTERNAL_PAYLOAD_STORAGE_MAX_BYTES
+              value: "1048576"
+            - name: EXTERNAL_PAYLOAD_STORAGE_ACCESS_KEY_PATH
+              value: /var/run/secrets/minio/root-user
+            - name: EXTERNAL_PAYLOAD_STORAGE_SECRET_KEY_PATH
+              value: /var/run/secrets/minio/root-password
+          volumeMounts:
+            - name: minio-credentials
+              mountPath: /var/run/secrets/minio
+              readOnly: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
