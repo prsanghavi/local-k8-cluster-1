@@ -21,7 +21,7 @@ spec:
             secretName: temporal-worker-minio-credentials
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local
+          image: k3d-registry:5000/temporal-payload-relay:local-20260724145551
           imagePullPolicy: Always
           env:
             - name: TEMPORAL_HOST
