@@ -11,6 +11,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
 | `vault/` | Helm values + ArgoCD app for local Vault + JWT plugin |
 | `minio/` | Single-node MinIO manifests + persistent storage |
+| `namespaces/` | GitOps-managed shared Kubernetes namespaces |
 | `scripts/infra-setup/` | k3d cluster lifecycle scripts (create, start, stop, auto-start, secrets) |
 
 ## Services
