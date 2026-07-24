@@ -1,20 +1,42 @@
-# Vault JWT Engine
+# Local Vault
 
-Local Vault for this repo runs in `dev` mode and auto-mounts the Outfoxx JWT
-secrets engine at `jwt/`.
+Local Vault runs as a single persistent standalone instance. It is intentionally
+not highly available, but its file-backed PVC survives pod and cluster restarts
+under the k3d host data directory. It remains local-only and uses HTTP; do not
+reuse this configuration for production.
 
-This document covers the manual steps to configure that engine so it can mint
-JWTs for Temporal auth testing.
+This document covers first-time initialization, unseal, and the optional Outfoxx
+JWT plugin used for Temporal auth testing.
 
 ## Prerequisites
 
-- Vault app is synced in ArgoCD
+- Vault app is synced in ArgoCD and its `vault-0` pod is running
 - `vault.local` resolves to `127.0.0.1`
-- You can log into Vault with the local dev root token:
+
+## Initialize Vault once
+
+Persistent Vault starts uninitialized. Run the following after its first ArgoCD
+sync, then store the displayed unseal key and root token in your password
+manager. Never commit either value.
+
+```bash
+kubectl -n vault exec vault-0 -- sh -ec \
+  'VAULT_ADDR=http://127.0.0.1:8200 vault operator init -key-shares=1 -key-threshold=1'
+```
+
+Unseal Vault after initialization and after any Vault pod restart:
+
+```bash
+kubectl -n vault exec vault-0 -- sh -ec \
+  'VAULT_ADDR=http://127.0.0.1:8200 vault operator unseal <unseal-key>'
+```
+
+Then authenticate using the root token from initialization:
 
 ```bash
 export VAULT_ADDR=http://vault.local
-vault login root
+export VAULT_TOKEN=<root-token>
+vault login "$VAULT_TOKEN"
 ```
 
 If ingress is not working yet, port-forward instead:
@@ -22,13 +44,29 @@ If ingress is not working yet, port-forward instead:
 ```bash
 kubectl -n vault port-forward svc/vault-ui 8200:8200
 export VAULT_ADDR=http://127.0.0.1:8200
-vault login root
+export VAULT_TOKEN=<root-token>
+vault login "$VAULT_TOKEN"
 ```
 
 ## Confirm the JWT engine is mounted
 
-The local values file auto-registers and mounts the Outfoxx JWT plugin at
-`jwt/`.
+After Vault is initialized and unsealed, register and mount the bundled
+Outfoxx JWT plugin once. The plugin binary is downloaded into the pod by the
+existing init container; its registration is Vault state and is therefore not
+part of Helm values.
+
+```bash
+kubectl -n vault exec vault-0 -- sh -ec '
+  export VAULT_ADDR=http://127.0.0.1:8200
+  export VAULT_TOKEN=<root-token>
+  SHA="$(sha256sum /usr/local/libexec/vault/vault-plugin-secrets-jwt | awk '\''{print $1}'\'')"
+  vault plugin register -sha256="$SHA" secret vault-plugin-secrets-jwt
+  vault secrets enable -path=jwt -plugin-name=vault-plugin-secrets-jwt plugin
+'
+```
+
+The commands are one-time operations. If they report that the plugin or `jwt/`
+mount already exists, leave the existing state in place.
 
 Check it:
 
@@ -56,7 +94,7 @@ Recommended local config:
 
 ```bash
 curl -s \
-  -H "X-Vault-Token: root" \
+  -H "X-Vault-Token: $VAULT_TOKEN" \
   -H "Content-Type: application/json" \
   -X POST \
   -d '{
@@ -90,7 +128,7 @@ Create a reusable role for a Temporal worker:
 
 ```bash
 curl -s \
-  -H "X-Vault-Token: root" \
+  -H "X-Vault-Token: $VAULT_TOKEN" \
   -H "Content-Type: application/json" \
   -X POST \
   -d '{
@@ -123,7 +161,7 @@ Mint a JWT for the worker:
 
 ```bash
 curl -s \
-  -H "X-Vault-Token: root" \
+  -H "X-Vault-Token: $VAULT_TOKEN" \
   -H "Content-Type: application/json" \
   -X POST \
   -d '{"claims":{"sub":"svc:temporal-worker-1","aud":"temporal"}}' \
@@ -251,7 +289,7 @@ If it fails before Temporal startup, check:
   engine. Use CLI/API checks to validate it.
 - The Vault CLI worked for simple scalar reads, but HTTP JSON writes were needed
   for this plugin's list/map fields.
-- This local setup is intentionally insecure and disposable:
-  - Vault runs in `dev` mode
-  - root token is `root`
+- This local setup is intentionally not production-ready:
+  - it is one node with manual unseal
   - HTTP is used instead of TLS
+  - unseal keys and the root token must be retained outside this repository

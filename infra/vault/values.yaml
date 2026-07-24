@@ -1,4 +1,4 @@
-# Vault Helm values — local-cluster-1 cluster
+# Vault Helm values — persistent single-node local-cluster-1 Vault
 # Chart: hashicorp/vault 0.33.0
 # Reference: infra/vault/default.values.yaml
 
@@ -14,13 +14,38 @@ server:
       cpu: "500m"
       memory: "512Mi"
 
+  # This is deliberately a single replica: it provides persistent state for
+  # local encryption testing, not high availability.
   dev:
-    enabled: true
-    # Local-only root token for startup automation and UI login.
-    devRootToken: "root"
+    enabled: false
 
-  # Dev mode needs the plugin directory passed as a startup arg.
-  extraArgs: "-dev-plugin-dir=/usr/local/libexec/vault"
+  standalone:
+    enabled: true
+    config: |-
+      ui = true
+      plugin_directory = "/usr/local/libexec/vault"
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  dataStorage:
+    enabled: true
+    size: 2Gi
+    accessMode: ReadWriteOnce
+
+  # Keep the local Vault state if the StatefulSet is recreated or the Helm app
+  # is temporarily removed. The k3d local-path provisioner persists it under
+  # ~/k3d-data/local-cluster-1 on the host.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
 
   volumes:
     - name: plugins
@@ -55,26 +80,6 @@ server:
       volumeMounts:
         - name: plugins
           mountPath: /usr/local/libexec/vault
-
-  postStart:
-    - /bin/sh
-    - -ec
-    - |
-      export VAULT_ADDR="http://127.0.0.1:8200"
-      export VAULT_TOKEN="root"
-
-      for _ in $(seq 1 60); do
-        vault status >/dev/null 2>&1 && break
-        sleep 2
-      done
-
-      SHA="$(sha256sum /usr/local/libexec/vault/vault-plugin-secrets-jwt | awk '{print $1}')"
-
-      vault plugin list -format=json 2>/dev/null | grep -q '"vault-plugin-secrets-jwt"' || \
-        vault plugin register -sha256="${SHA}" secret vault-plugin-secrets-jwt
-
-      vault secrets list -format=json 2>/dev/null | grep -q '"jwt/"' || \
-        vault secrets enable -path=jwt -plugin-name=vault-plugin-secrets-jwt plugin
 
   ingress:
     enabled: true
