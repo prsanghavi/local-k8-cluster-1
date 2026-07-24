@@ -5,6 +5,11 @@ Single-node, S3-compatible object storage for the local k3d cluster.
 - Console: `http://minio.local`
 - S3 API: `http://s3.local`
 - Storage: 10 GiB `local-path` PVC
+- Bootstrap bucket: `temporal-worker-payloads`
+
+The bootstrap Job only ensures the bucket exists. Configure an external payload
+converter/data codec in a Temporal worker before expecting workflow payloads to
+be stored in this S3 bucket.
 
 ## First-time credentials setup
 
