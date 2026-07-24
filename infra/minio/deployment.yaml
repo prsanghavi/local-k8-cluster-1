@@ -18,8 +18,9 @@ spec:
     spec:
       containers:
         - name: minio
-          # Pin the last community release; update deliberately when upgrading MinIO.
-          image: quay.io/minio/minio:RELEASE.2025-10-15T17-29-55Z
+          # MinIO's public release tags were removed after the project archive.
+          # Pin the currently published image by digest for reproducible GitOps syncs.
+          image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
           imagePullPolicy: IfNotPresent
           args:
             - server
