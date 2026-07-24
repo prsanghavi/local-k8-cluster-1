@@ -21,7 +21,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-*** Update File: /Users/pratiksanghavi/Desktop/experiments/local-k8-cluster-1/infra/README.md
-@@
- | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
-+| `temporal-bootstrap/` | Temporal namespace and Nexus endpoint bootstrap Job |

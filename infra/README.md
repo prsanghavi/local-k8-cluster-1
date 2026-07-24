@@ -9,6 +9,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `postgres/` | Helm values + ArgoCD app for PostgreSQL |
 | `pgadmin/` | Helm values + ArgoCD app for PgAdmin |
 | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
+| `temporal-bootstrap/` | Temporal namespace and Nexus endpoint bootstrap Job |
 | `vault/` | Helm values + ArgoCD app for local Vault + JWT plugin |
 | `minio/` | Single-node MinIO manifests + persistent storage |
 | `namespaces/` | GitOps-managed shared Kubernetes namespaces |
