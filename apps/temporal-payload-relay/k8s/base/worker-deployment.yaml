@@ -1,20 +1,14 @@
-apiVersion: temporal.io/v1alpha1
-kind: WorkerDeployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: temporal-payload-relay
   labels:
     app: temporal-payload-relay
 spec:
   replicas: 1
-  workerOptions:
-    connectionRef:
-      name: temporal
-    temporalNamespace: replace-me
-  rollout:
-    strategy: AllAtOnce
-  sunset:
-    scaledownDelay: 1h
-    deleteDelay: 24h
+  selector:
+    matchLabels:
+      app: temporal-payload-relay
   template:
     metadata:
       labels:

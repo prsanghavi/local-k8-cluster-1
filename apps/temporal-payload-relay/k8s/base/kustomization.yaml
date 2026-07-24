@@ -3,5 +3,4 @@ kind: Kustomization
 
 resources:
   - serviceaccount.yaml
-  - connection.yaml
   - worker-deployment.yaml

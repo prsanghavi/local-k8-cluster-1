@@ -6,12 +6,9 @@ resources:
   - ../base
 patches:
   - target:
-      kind: WorkerDeployment
+      kind: Deployment
       name: temporal-payload-relay
     patch: |-
-      - op: replace
-        path: /spec/workerOptions/temporalNamespace
-        value: ob1-temporal-comms-cluster-1-ns-1
       - op: replace
         path: /spec/template/spec/containers/0/env/1/value
         value: ob1-temporal-comms-cluster-1-ns-1
