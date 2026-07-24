@@ -22,7 +22,7 @@ type StartChainInput struct {
 type RelayInput struct {
 	ChainID           string
 	Hop               int
-	Payload           PayloadHandoff
+	Payload           string
 	PayloadSizesBytes []int
 }
 
@@ -41,7 +41,7 @@ func StartChainWorkflow(ctx workflow.Context, input StartChainInput) (ChainResul
 	if err != nil {
 		return ChainResult{}, err
 	}
-	payload, err := createPayloadHandoff(ctx, input.ChainID, 0, sizes[0])
+	payload, err := generatePayload(ctx, input.ChainID, 0, sizes[0])
 	if err != nil {
 		return ChainResult{}, err
 	}
@@ -58,11 +58,11 @@ func RelayWorkflow(ctx workflow.Context, input RelayInput) (ChainResult, error) 
 
 	// Hop 3 reaches Comms through the fourth endpoint and completes the cycle.
 	if input.Hop == len(endpointForHop)-1 {
-		return ChainResult{ChainID: input.ChainID, CompletedHop: input.Hop, PayloadSHA256: input.Payload.SHA256}, nil
+		return ChainResult{ChainID: input.ChainID, CompletedHop: input.Hop, PayloadSHA256: payloadSHA256(input.Payload)}, nil
 	}
 
 	nextHop := input.Hop + 1
-	payload, err := createPayloadHandoff(ctx, input.ChainID, nextHop, input.PayloadSizesBytes[nextHop])
+	payload, err := generatePayload(ctx, input.ChainID, nextHop, input.PayloadSizesBytes[nextHop])
 	if err != nil {
 		return ChainResult{}, err
 	}
@@ -70,22 +70,17 @@ func RelayWorkflow(ctx workflow.Context, input RelayInput) (ChainResult, error) 
 	return callNext(ctx, next)
 }
 
-// createPayloadHandoff keeps small values inline. Values above the configured
-// 256 KiB threshold cross activity boundaries (exercising Temporal external
-// storage) and are then stored and verified in MinIO before Nexus receives a
-// small reference instead of an external-storage payload.
-func createPayloadHandoff(ctx workflow.Context, chainID string, hop, sizeBytes int) (PayloadHandoff, error) {
+// generatePayload creates the message in an activity so the normal Temporal
+// external-storage path is exercised before the payload is sent directly via
+// Nexus. The shared module's converter hydrates an SDK storage reference at the
+// Nexus decoding boundary when the payload exceeds the configured threshold.
+func generatePayload(ctx workflow.Context, chainID string, hop, sizeBytes int) (string, error) {
 	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: time.Minute})
 	var payload string
 	if err := workflow.ExecuteActivity(activityCtx, GenerateLargePayloadActivity, GenerateInput{ChainID: chainID, Hop: hop, SizeBytes: sizeBytes}).Get(activityCtx, &payload); err != nil {
-		return PayloadHandoff{}, err
+		return "", err
 	}
-	if len(payload) <= externalStorageThresholdBytes {
-		return inlinePayloadHandoff(payload), nil
-	}
-	var reference PayloadReference
-	err := workflow.ExecuteActivity(activityCtx, PersistPayloadActivity, PersistInput{ChainID: chainID, Hop: hop, Payload: payload}).Get(activityCtx, &reference)
-	return PayloadHandoff{Reference: &reference, Size: reference.Size, SHA256: reference.SHA256}, err
+	return payload, nil
 }
 
 func validatedPayloadSizes(sizes []int) ([]int, error) {

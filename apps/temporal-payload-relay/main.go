@@ -25,10 +25,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("invalid worker configuration: %v", err)
 	}
-	if err := initializePayloadStore(); err != nil {
-		log.Fatalf("initialize MinIO payload store: %v", err)
-	}
-
 	service, err := temporalworker.New(temporalworker.RunOptions{Config: config}, registerWorker)
 	if err != nil {
 		log.Fatalf("create worker: %v", err)
@@ -53,7 +49,6 @@ func registerWorker(w worker.Worker) {
 	w.RegisterWorkflow(StartChainWorkflow)
 	w.RegisterWorkflow(RelayWorkflow)
 	w.RegisterActivity(GenerateLargePayloadActivity)
-	w.RegisterActivity(PersistPayloadActivity)
 	w.RegisterActivity(PrintPayloadActivity)
 
 	operation := temporalnexus.MustNewTemporalOperation(temporalnexus.TemporalOperationOptions[RelayInput, ChainResult]{
