@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ob1-tf-eks-de-v2-comms-ns-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ob1-tf-eks-de-v2-llm-1-ns-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uo-bpo1-de-v2-budy-gilfoyle-ns-1
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uo-bpo1-de-v2-hwhrn-hope-ns-1
