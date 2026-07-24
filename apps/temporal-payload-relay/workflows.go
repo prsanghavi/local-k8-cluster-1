@@ -1,15 +1,11 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
 )
-
-const payloadBytes = 320 * 1024
 
 var endpointForHop = []string{
 	"ob1-nexus-llm-cluster-1-endpoint-1",
@@ -25,12 +21,12 @@ type StartChainInput struct {
 type RelayInput struct {
 	ChainID string
 	Hop     int
-	Payload string
+	Payload PayloadReference
 }
 
 type ChainResult struct {
-	ChainID     string
-	CompletedHop int
+	ChainID       string
+	CompletedHop  int
 	PayloadSHA256 string
 }
 
@@ -39,7 +35,11 @@ func StartChainWorkflow(ctx workflow.Context, input StartChainInput) (ChainResul
 	if input.ChainID == "" {
 		return ChainResult{}, fmt.Errorf("ChainID is required")
 	}
-	return callNext(ctx, RelayInput{ChainID: input.ChainID, Hop: 0, Payload: largePayload(input.ChainID, 0)})
+	payload, err := createAndPersistPayload(ctx, input.ChainID, 0)
+	if err != nil {
+		return ChainResult{}, err
+	}
+	return callNext(ctx, RelayInput{ChainID: input.ChainID, Hop: 0, Payload: payload})
 }
 
 // RelayWorkflow runs in the target namespace for a Nexus operation. Each hop
@@ -52,12 +52,30 @@ func RelayWorkflow(ctx workflow.Context, input RelayInput) (ChainResult, error) 
 
 	// Hop 3 reaches Comms through the fourth endpoint and completes the cycle.
 	if input.Hop == len(endpointForHop)-1 {
-		sum := sha256.Sum256([]byte(input.Payload))
-		return ChainResult{ChainID: input.ChainID, CompletedHop: input.Hop, PayloadSHA256: fmt.Sprintf("%x", sum[:])}, nil
+		return ChainResult{ChainID: input.ChainID, CompletedHop: input.Hop, PayloadSHA256: input.Payload.SHA256}, nil
 	}
 
-	next := RelayInput{ChainID: input.ChainID, Hop: input.Hop + 1, Payload: largePayload(input.ChainID, input.Hop+1)}
+	payload, err := createAndPersistPayload(ctx, input.ChainID, input.Hop+1)
+	if err != nil {
+		return ChainResult{}, err
+	}
+	next := RelayInput{ChainID: input.ChainID, Hop: input.Hop + 1, Payload: payload}
 	return callNext(ctx, next)
+}
+
+// createAndPersistPayload deliberately crosses two activity boundaries with the
+// 320 KiB string. The configured Temporal external storage driver offloads that
+// activity result/input, while PersistPayloadActivity verifies the final MinIO
+// object that is handed off through Nexus.
+func createAndPersistPayload(ctx workflow.Context, chainID string, hop int) (PayloadReference, error) {
+	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: time.Minute})
+	var payload string
+	if err := workflow.ExecuteActivity(activityCtx, GenerateLargePayloadActivity, GenerateInput{ChainID: chainID, Hop: hop}).Get(activityCtx, &payload); err != nil {
+		return PayloadReference{}, err
+	}
+	var reference PayloadReference
+	err := workflow.ExecuteActivity(activityCtx, PersistPayloadActivity, PersistInput{ChainID: chainID, Hop: hop, Payload: payload}).Get(activityCtx, &reference)
+	return reference, err
 }
 
 func callNext(ctx workflow.Context, input RelayInput) (ChainResult, error) {
@@ -66,9 +84,4 @@ func callNext(ctx workflow.Context, input RelayInput) (ChainResult, error) {
 	future := nexusClient.ExecuteOperation(ctx, nexusOperation, input, workflow.NexusOperationOptions{ScheduleToCloseTimeout: 5 * time.Minute})
 	var result ChainResult
 	return result, future.Get(ctx, &result)
-}
-
-func largePayload(chainID string, hop int) string {
-	prefix := fmt.Sprintf("chain=%s hop=%d ", chainID, hop)
-	return prefix + strings.Repeat("payload-data-", (payloadBytes/len("payload-data-"))+1)
 }
