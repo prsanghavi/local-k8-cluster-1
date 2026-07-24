@@ -16,6 +16,7 @@ AUTO_SECRET_SCRIPTS=(
   setup-postgres-secret.sh
   setup-temporal-secret.sh
   setup-pgadmin-secret.sh
+  setup-minio-secret.sh
 )
 
 echo "=== Auto secret setup ==="
@@ -57,6 +58,8 @@ echo "Retrieve passwords:"
 echo "  kubectl get secret postgres-credentials                -n postgres               -o jsonpath='{.data.password}'    | base64 -d && echo"
 echo "  kubectl get secret temporal-db-credentials             -n temporal               -o jsonpath='{.data.password}'    | base64 -d && echo"
 echo "  kubectl get secret pgadmin-credentials                 -n pgadmin                -o jsonpath='{.data.password}'    | base64 -d && echo"
+echo "  kubectl get secret minio-credentials                   -n minio                  -o jsonpath='{.data.root-user}'   | base64 -d && echo"
+echo "  kubectl get secret minio-credentials                   -n minio                  -o jsonpath='{.data.root-password}' | base64 -d && echo"
 echo "  kubectl get secret context-cluster-file-db-credentials -n postgres               -o jsonpath='{.data.password}'    | base64 -d && echo"
 echo "  kubectl get secret file-provider-db                    -n k8-context-cluster-ns-1 -o jsonpath='{.data.DATABASE_URL}' | base64 -d && echo"
 echo ""

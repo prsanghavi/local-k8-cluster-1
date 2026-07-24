@@ -10,6 +10,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `pgadmin/` | Helm values + ArgoCD app for PgAdmin |
 | `temporal/` | Helm values + ArgoCD app for Temporal server + UI |
 | `vault/` | Helm values + ArgoCD app for local Vault + JWT plugin |
+| `minio/` | Single-node MinIO manifests + persistent storage |
 | `scripts/infra-setup/` | k3d cluster lifecycle scripts (create, start, stop, auto-start, secrets) |
 
 ## Services
@@ -20,6 +21,7 @@ Helm-managed shared infrastructure and cluster lifecycle scripts.
 | `pgadmin/` | runix/pgadmin4 | `pgadmin` |
 | `temporal/` | temporal/temporal | `temporal` |
 | `vault/` | hashicorp/vault | `vault` |
+| `minio/` | MinIO | `minio` |
 
 ## Structure per service
 
@@ -66,6 +68,7 @@ Individual scripts (same skip-if-exists behaviour):
 | `secrets-auto-setup-scripts/setup-postgres-secret.sh` | `postgres-credentials` | `postgres` |
 | `secrets-auto-setup-scripts/setup-temporal-secret.sh` | `temporal-db-credentials` | `postgres`, `temporal` |
 | `secrets-auto-setup-scripts/setup-pgadmin-secret.sh` | `pgadmin-credentials` | `pgadmin` |
+| `secrets-auto-setup-scripts/setup-minio-secret.sh` | `minio-credentials` | `minio` |
 
 Retrieve passwords:
 
@@ -73,4 +76,6 @@ Retrieve passwords:
 kubectl get secret postgres-credentials    -n postgres -o jsonpath='{.data.password}' | base64 -d && echo
 kubectl get secret temporal-db-credentials -n temporal -o jsonpath='{.data.password}' | base64 -d && echo
 kubectl get secret pgadmin-credentials     -n pgadmin  -o jsonpath='{.data.password}' | base64 -d && echo
+kubectl get secret minio-credentials       -n minio    -o jsonpath='{.data.root-user}' | base64 -d && echo
+kubectl get secret minio-credentials       -n minio    -o jsonpath='{.data.root-password}' | base64 -d && echo
 ```
