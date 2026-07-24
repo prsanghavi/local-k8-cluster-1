@@ -72,6 +72,14 @@ admintools:
 web:
   enabled: true
   replicaCount: 1
+  ingress:
+    # Route the Temporal Web UI through k3d's bundled Traefik ingress.
+    enabled: true
+    className: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    hosts:
+      - temporal.local
 
 # Schema setup runs as Helm hooks before server pods start
 schema:
