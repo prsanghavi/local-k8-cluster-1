@@ -13,11 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-const payloadBytes = 320 * 1024
+const externalStorageThresholdBytes = 256 * 1024
 
 type GenerateInput struct {
-	ChainID string
-	Hop     int
+	ChainID   string
+	Hop       int
+	SizeBytes int
 }
 type PersistInput struct {
 	ChainID string
@@ -29,10 +30,20 @@ type PayloadReference struct {
 	Size   int
 	SHA256 string
 }
+type PayloadHandoff struct {
+	Inline    string
+	Reference *PayloadReference
+	Size      int
+	SHA256    string
+}
 
 func GenerateLargePayloadActivity(_ context.Context, input GenerateInput) (string, error) {
 	prefix := fmt.Sprintf("chain=%s hop=%d ", input.ChainID, input.Hop)
-	return prefix + strings.Repeat("payload-data-", (payloadBytes/len("payload-data-"))+1), nil
+	if input.SizeBytes < len(prefix) {
+		return "", fmt.Errorf("payload size %d is smaller than prefix", input.SizeBytes)
+	}
+	payload := prefix + strings.Repeat("payload-data-", (input.SizeBytes/len("payload-data-"))+1)
+	return payload[:input.SizeBytes], nil
 }
 
 // PersistPayloadActivity proves MinIO storage by writing and immediately
@@ -62,7 +73,16 @@ func PersistPayloadActivity(ctx context.Context, input PersistInput) (PayloadRef
 
 // PrintPayloadActivity loads and validates the MinIO object before logging it.
 func PrintPayloadActivity(ctx context.Context, input RelayInput) error {
-	object, err := payloadStore.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(payloadBucket), Key: aws.String(input.Payload.Key)})
+	if input.Payload.Reference == nil {
+		payload := []byte(input.Payload.Inline)
+		sum := sha256.Sum256(payload)
+		if len(payload) != input.Payload.Size || fmt.Sprintf("%x", sum[:]) != input.Payload.SHA256 {
+			return fmt.Errorf("inline payload validation failed")
+		}
+		log.Printf("received inline payload: chain=%s hop=%d bytes=%d sha256=%x payload=%s", input.ChainID, input.Hop, len(payload), sum, payload)
+		return nil
+	}
+	object, err := payloadStore.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(payloadBucket), Key: aws.String(input.Payload.Reference.Key)})
 	if err != nil {
 		return fmt.Errorf("read payload from MinIO: %w", err)
 	}
@@ -73,8 +93,13 @@ func PrintPayloadActivity(ctx context.Context, input RelayInput) error {
 	}
 	sum := sha256.Sum256(payload)
 	if len(payload) != input.Payload.Size || fmt.Sprintf("%x", sum[:]) != input.Payload.SHA256 {
-		return fmt.Errorf("MinIO payload validation failed for %s", input.Payload.Key)
+		return fmt.Errorf("MinIO payload validation failed for %s", input.Payload.Reference.Key)
 	}
-	log.Printf("received payload: chain=%s hop=%d key=%s bytes=%d sha256=%x payload=%s", input.ChainID, input.Hop, input.Payload.Key, len(payload), sum, payload)
+	log.Printf("received MinIO payload: chain=%s hop=%d key=%s bytes=%d sha256=%x payload=%s", input.ChainID, input.Hop, input.Payload.Reference.Key, len(payload), sum, payload)
 	return nil
+}
+
+func inlinePayloadHandoff(payload string) PayloadHandoff {
+	sum := sha256.Sum256([]byte(payload))
+	return PayloadHandoff{Inline: payload, Size: len(payload), SHA256: fmt.Sprintf("%x", sum[:])}
 }
