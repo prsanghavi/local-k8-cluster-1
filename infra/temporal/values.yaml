@@ -77,6 +77,11 @@ admintools:
 web:
   enabled: true
   replicaCount: 1
+  # temporal.local is intentionally HTTP for local k3d access. Permit the UI
+  # CSRF cookie over HTTP so write actions, including Start Workflow, work.
+  additionalEnv:
+    - name: TEMPORAL_CSRF_COOKIE_INSECURE
+      value: "true"
   ingress:
     # Route the Temporal Web UI through k3d's bundled Traefik ingress.
     enabled: true
