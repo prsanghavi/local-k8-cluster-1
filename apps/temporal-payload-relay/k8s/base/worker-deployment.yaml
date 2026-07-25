@@ -13,6 +13,12 @@ spec:
     metadata:
       labels:
         app: temporal-payload-relay
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-token: "true"
+        vault.hashicorp.com/agent-run-as-same-user: "true"
+        vault.hashicorp.com/role: replace-me
+        vault.hashicorp.com/service: http://vault.vault.svc.cluster.local:8200
     spec:
       serviceAccountName: temporal-payload-relay
       volumes:
@@ -23,6 +29,14 @@ spec:
         - name: temporal-payload-relay
           image: k3d-registry:5000/temporal-payload-relay:local-20260724152005
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
           env:
             - name: TEMPORAL_HOST
               value: temporal-frontend.temporal.svc.cluster.local:7233

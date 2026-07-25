@@ -3,7 +3,10 @@
 # Reference: infra/vault/default.values.yaml
 
 injector:
-  enabled: false
+  # The relay workers opt in through pod-template annotations. The injector
+  # authenticates them through their Kubernetes service accounts and writes
+  # short-lived Vault tokens only to an in-memory shared volume.
+  enabled: true
 
 server:
   resources:
