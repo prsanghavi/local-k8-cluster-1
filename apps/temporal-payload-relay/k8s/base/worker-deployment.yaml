@@ -30,9 +30,12 @@ spec:
         - name: minio-credentials
           secret:
             secretName: temporal-worker-minio-credentials
+        - name: nexus-encryption-routes
+          configMap:
+            name: temporal-payload-relay-nexus-encryption-routes
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260724174837
+          image: k3d-registry:5000/temporal-payload-relay:local-20260724210313
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -71,9 +74,14 @@ spec:
               value: transit
             - name: VAULT_TRANSIT_KEY
               value: temporal-payload-relay
+            - name: NEXUS_ENCRYPTION_ROUTES_PATH
+              value: /etc/temporal-security/routes.json
           volumeMounts:
             - name: minio-credentials
               mountPath: /var/run/secrets/minio
+              readOnly: true
+            - name: nexus-encryption-routes
+              mountPath: /etc/temporal-security
               readOnly: true
           resources:
             requests:

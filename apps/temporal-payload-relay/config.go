@@ -22,11 +22,12 @@ func workerConfigFromEnv() (temporalworker.Config, error) {
 		return temporalworker.Config{}, err
 	}
 
+	identity := envOr("TEMPORAL_WORKER_IDENTITY", "temporal-payload-relay")
 	return temporalworker.Config{
 		Address:                                    envOr("TEMPORAL_HOST", "temporal-frontend.temporal.svc.cluster.local:7233"),
 		Namespace:                                  os.Getenv("TEMPORAL_NAMESPACE"),
 		TaskQueue:                                  os.Getenv("TEMPORAL_TASK_QUEUE"),
-		Identity:                                   envOr("TEMPORAL_WORKER_IDENTITY", "temporal-payload-relay"),
+		Identity:                                   identity,
 		EnableExternalPayloadStorage:               true,
 		ExternalPayloadStorageEndpoint:             envOr("EXTERNAL_PAYLOAD_STORAGE_ENDPOINT", "http://minio.minio.svc.cluster.local:9000"),
 		ExternalPayloadStorageRegion:               envOr("EXTERNAL_PAYLOAD_STORAGE_REGION", "us-east-1"),
@@ -38,6 +39,8 @@ func workerConfigFromEnv() (temporalworker.Config, error) {
 		EnablePayloadEncryption:                    enableEncryption,
 		VaultTransitMount:                          envOr("VAULT_TRANSIT_MOUNT", "transit"),
 		VaultTransitKey:                            envOr("VAULT_TRANSIT_KEY", "temporal-payload-relay"),
+		PayloadEncryptionPrincipal:                 identity,
+		NexusEncryptionRoutesPath:                  envOr("NEXUS_ENCRYPTION_ROUTES_PATH", "/etc/temporal-security/routes.json"),
 	}, nil
 }
 
