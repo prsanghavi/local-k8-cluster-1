@@ -16,10 +16,12 @@ spec:
       annotations:
         # Bump this revision to deliberately recreate worker pods after a Vault
         # injector configuration change. Admission only mutates pods at creation.
-        vault.hashicorp.com/agent-inject-revision: "1"
+        vault.hashicorp.com/agent-inject-revision: "2"
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/agent-inject-token: "true"
         vault.hashicorp.com/agent-run-as-same-user: "true"
+        vault.hashicorp.com/agent-cache-enable: "true"
+        vault.hashicorp.com/agent-cache-use-auto-auth-token: "force"
+        vault.hashicorp.com/agent-cache-listener-port: "8200"
         vault.hashicorp.com/role: replace-me
         vault.hashicorp.com/service: http://vault.vault.svc.cluster.local:8200
     spec:
@@ -30,7 +32,7 @@ spec:
             secretName: temporal-worker-minio-credentials
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260724152005
+          image: k3d-registry:5000/temporal-payload-relay:local-20260724174149
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -63,6 +65,12 @@ spec:
               value: /var/run/secrets/minio/root-user
             - name: EXTERNAL_PAYLOAD_STORAGE_SECRET_KEY_PATH
               value: /var/run/secrets/minio/root-password
+            - name: ENABLE_PAYLOAD_ENCRYPTION
+              value: "true"
+            - name: VAULT_TRANSIT_MOUNT
+              value: transit
+            - name: VAULT_TRANSIT_KEY
+              value: temporal-payload-relay
           volumeMounts:
             - name: minio-credentials
               mountPath: /var/run/secrets/minio
