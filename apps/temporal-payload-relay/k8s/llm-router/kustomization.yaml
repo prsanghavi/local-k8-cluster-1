@@ -18,3 +18,6 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/3/value
         value: temporal-payload-relay-llm-router
+      - op: replace
+        path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
+        value: temporal-payload-relay-llm-router
