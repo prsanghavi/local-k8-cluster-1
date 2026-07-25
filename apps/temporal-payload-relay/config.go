@@ -17,6 +17,10 @@ func workerConfigFromEnv() (temporalworker.Config, error) {
 	if err != nil {
 		return temporalworker.Config{}, err
 	}
+	enableEncryption, err := boolEnv("ENABLE_PAYLOAD_ENCRYPTION", false)
+	if err != nil {
+		return temporalworker.Config{}, err
+	}
 
 	return temporalworker.Config{
 		Address:                                    envOr("TEMPORAL_HOST", "temporal-frontend.temporal.svc.cluster.local:7233"),
@@ -31,6 +35,9 @@ func workerConfigFromEnv() (temporalworker.Config, error) {
 		ExternalPayloadStorageSecretAccessKeyPath:  envOr("EXTERNAL_PAYLOAD_STORAGE_SECRET_KEY_PATH", "/var/run/secrets/minio/root-password"),
 		ExternalPayloadStoragePayloadSizeThreshold: threshold,
 		ExternalPayloadStorageMaxPayloadSize:       maxSize,
+		EnablePayloadEncryption:                    enableEncryption,
+		VaultTransitMount:                          envOr("VAULT_TRANSIT_MOUNT", "transit"),
+		VaultTransitKey:                            envOr("VAULT_TRANSIT_KEY", "temporal-payload-relay"),
 	}, nil
 }
 
@@ -46,6 +53,17 @@ func intEnv(name string, fallback int) (int, error) {
 		parsed, err := strconv.Atoi(value)
 		if err != nil {
 			return 0, fmt.Errorf("parse %s: %w", name, err)
+		}
+		return parsed, nil
+	}
+	return fallback, nil
+}
+
+func boolEnv(name string, fallback bool) (bool, error) {
+	if value := os.Getenv(name); value != "" {
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			return false, fmt.Errorf("parse %s: %w", name, err)
 		}
 		return parsed, nil
 	}
