@@ -14,6 +14,9 @@ spec:
       labels:
         app: temporal-payload-relay
       annotations:
+        # Bump this revision to deliberately recreate worker pods after a Vault
+        # injector configuration change. Admission only mutates pods at creation.
+        vault.hashicorp.com/agent-inject-revision: "1"
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-inject-token: "true"
         vault.hashicorp.com/agent-run-as-same-user: "true"
