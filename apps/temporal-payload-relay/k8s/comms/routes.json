@@ -1,7 +1,7 @@
 {
   "version": 1,
   "routes": [
-    {"direction":"outbound","source_principal":"temporal-payload-relay-comms","endpoint":"ob1-nexus-llm-cluster-1-endpoint-1","service":"payload-relay","operation":"relay","route_id":"comms-to-llm-v1","recipient_key":"nexus-comms-to-llm"},
-    {"direction":"inbound","source_principal":"temporal-payload-relay-hawthorn-hope","endpoint":"ob1-nexus-comms-cluster-1-endpoint-1","service":"payload-relay","operation":"relay","route_id":"hawthorn-to-comms-v1","recipient_key":"nexus-hawthorn-to-comms"}
+    {"direction":"outbound","source_principal":"temporal-payload-relay-comms","endpoint":"ob1-nexus-llm-cluster-1-endpoint-1","service":"payload-relay","route_id":"comms-to-llm-v1","recipient_key":"nexus-comms-to-llm"},
+    {"direction":"inbound","source_principal":"temporal-payload-relay-hawthorn-hope","endpoint":"ob1-nexus-comms-cluster-1-endpoint-1","service":"payload-relay","route_id":"hawthorn-to-comms-v1","recipient_key":"nexus-hawthorn-to-comms"}
   ]
 }
