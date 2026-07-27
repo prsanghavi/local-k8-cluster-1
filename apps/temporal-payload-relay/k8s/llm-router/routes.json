@@ -1,7 +1,7 @@
 {
   "version": 1,
   "routes": [
-    {"direction":"inbound","source_principal":"temporal-payload-relay-comms","endpoint":"ob1-nexus-llm-cluster-1-endpoint-1","service":"payload-relay","operation":"relay","route_id":"comms-to-llm-v1","recipient_key":"nexus-comms-to-llm"},
-    {"direction":"outbound","source_principal":"temporal-payload-relay-llm-router","endpoint":"ob1-uo-temporal-budytest1-gilfoyletest1-1-1","service":"payload-relay","operation":"relay","route_id":"llm-to-budy-v1","recipient_key":"nexus-llm-to-budy"}
+    {"direction":"inbound","source_principal":"temporal-payload-relay-comms","endpoint":"ob1-nexus-llm-cluster-1-endpoint-1","service":"payload-relay","route_id":"comms-to-llm-v1","recipient_key":"nexus-comms-to-llm"},
+    {"direction":"outbound","source_principal":"temporal-payload-relay-llm-router","endpoint":"ob1-uo-temporal-budytest1-gilfoyletest1-1-1","service":"payload-relay","route_id":"llm-to-budy-v1","recipient_key":"nexus-llm-to-budy"}
   ]
 }

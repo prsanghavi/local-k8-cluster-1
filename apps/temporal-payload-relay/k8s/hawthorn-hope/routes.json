@@ -1,7 +1,7 @@
 {
   "version": 1,
   "routes": [
-    {"direction":"inbound","source_principal":"temporal-payload-relay-budytest1","endpoint":"ob1-uo-temporal-hawthorn-hope-1-1","service":"payload-relay","operation":"relay","route_id":"budy-to-hawthorn-v1","recipient_key":"nexus-budy-to-hawthorn"},
-    {"direction":"outbound","source_principal":"temporal-payload-relay-hawthorn-hope","endpoint":"ob1-nexus-comms-cluster-1-endpoint-1","service":"payload-relay","operation":"relay","route_id":"hawthorn-to-comms-v1","recipient_key":"nexus-hawthorn-to-comms"}
+    {"direction":"inbound","source_principal":"temporal-payload-relay-budytest1","endpoint":"ob1-uo-temporal-hawthorn-hope-1-1","service":"payload-relay","route_id":"budy-to-hawthorn-v1","recipient_key":"nexus-budy-to-hawthorn"},
+    {"direction":"outbound","source_principal":"temporal-payload-relay-hawthorn-hope","endpoint":"ob1-nexus-comms-cluster-1-endpoint-1","service":"payload-relay","route_id":"hawthorn-to-comms-v1","recipient_key":"nexus-hawthorn-to-comms"}
   ]
 }
