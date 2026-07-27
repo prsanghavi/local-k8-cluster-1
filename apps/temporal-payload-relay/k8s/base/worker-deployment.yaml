@@ -16,7 +16,7 @@ spec:
       annotations:
         # Bump this revision to deliberately recreate worker pods after a Vault
         # injector configuration change. Admission only mutates pods at creation.
-        vault.hashicorp.com/agent-inject-revision: "2"
+        vault.hashicorp.com/agent-inject-revision: "3"
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-run-as-same-user: "true"
         vault.hashicorp.com/agent-cache-enable: "true"

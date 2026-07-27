@@ -7,6 +7,15 @@ injector:
   # authenticates them through their Kubernetes service accounts and writes
   # short-lived Vault tokens only to an in-memory shared volume.
   enabled: true
+  # Bump this value to make ArgoCD roll the injector after a webhook TLS
+  # recovery. Auto-TLS creates a short-lived serving certificate at startup.
+  annotations:
+    vault.hashicorp.com/injector-rollout: "2026-07-27"
+  webhook:
+    # A worker that requires Vault must never be admitted without its Agent.
+    # This makes injector outages visible instead of causing loopback
+    # connection-refused failures at runtime.
+    failurePolicy: Fail
 
 server:
   resources:
