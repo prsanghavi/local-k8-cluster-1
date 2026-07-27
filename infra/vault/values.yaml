@@ -11,6 +11,11 @@ injector:
   # recovery. Auto-TLS creates a short-lived serving certificate at startup.
   annotations:
     vault.hashicorp.com/injector-rollout: "2026-07-27"
+  # The chart's required pod anti-affinity and this single-node cluster cannot
+  # accommodate a surge pod during a rolling update. Recreate the one injector
+  # instead, so TLS recovery rollouts complete deterministically.
+  strategy:
+    type: Recreate
   webhook:
     # A worker that requires Vault must never be admitted without its Agent.
     # This makes injector outages visible instead of causing loopback
