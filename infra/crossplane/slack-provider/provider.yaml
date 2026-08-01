@@ -1,0 +1,8 @@
+# Native Slack Conversation provider. It automatically installs its shared
+# ProviderConfig family package as a dependency.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-slack-conversation
+spec:
+  package: ghcr.io/starlightromero/provider-slack-conversation:v2.0.1
