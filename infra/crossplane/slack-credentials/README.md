@@ -1,6 +1,6 @@
 # Slack provider credentials
 
-The Slack bot token is stored only in Vault at KV v1 path `v1/slack`, key
+The Slack bot token is stored only in Vault at KV v2 path `v1/slack`, key
 `slack_operator`. Vault Secrets Operator copies it to the generated Kubernetes
 Secret `crossplane-system/slack-creds`, which the Slack `ProviderConfig` reads.
 
