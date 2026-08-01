@@ -1,8 +1,9 @@
 # Slack provider credentials
 
-The Slack bot token is stored only in Vault at KV v2 path `v1/slack`, key
-`slack_operator`. Vault Secrets Operator copies it to the generated Kubernetes
-Secret `crossplane-system/slack-creds`, which the Slack `ProviderConfig` reads.
+The Slack bot token is stored only in Vault at KV v2 mount `kv`, path
+`v1/slack`, key `slack_operator`. Vault Secrets Operator copies it to the
+generated Kubernetes Secret `crossplane-system/slack-creds`, which the Slack
+`ProviderConfig` reads.
 
 Before Argo CD can sync the `VaultStaticSecret`, configure the least-privilege
 Vault policy and Kubernetes auth role. Run this locally with an authenticated
@@ -10,7 +11,7 @@ Vault CLI; do not save or export the root token in this repository.
 
 ```bash
 cat <<'EOF' | vault policy write crossplane-slack -
-path "v1/slack" {
+path "kv/data/v1/slack" {
   capabilities = ["read"]
 }
 EOF
