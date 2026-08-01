@@ -1,10 +1,10 @@
 apiVersion: conversation.slack.crossplane.io/v1alpha1
 kind: Conversation
 metadata:
-  name: crossplane-test-channel
+  name: crossplane-test-channel-public
 spec:
   forProvider:
-    name: crossplane-test-channel
+    name: crossplane-test-channel-public
     isPrivate: false
     purpose: Public channel created by Crossplane for provider verification.
   providerConfigRef:
