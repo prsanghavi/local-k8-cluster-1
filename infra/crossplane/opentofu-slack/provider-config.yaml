@@ -1,0 +1,33 @@
+apiVersion: opentofu.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: slack
+spec:
+  # provider-opentofu writes this Secret value to the workspace as slack-token.
+  credentials:
+    - filename: slack-token
+      source: Secret
+      secretRef:
+        namespace: crossplane-system
+        name: slack-creds
+        key: slack_operator
+  # State must be durable: the provider's local workspace directory is ephemeral.
+  configuration: |
+    terraform {
+      required_providers {
+        slack = {
+          source  = "TrueLayer/slack"
+          version = "1.4.1"
+        }
+      }
+
+      backend "kubernetes" {
+        secret_suffix     = "crossplane-slack"
+        namespace         = "crossplane-system"
+        in_cluster_config = true
+      }
+    }
+
+    provider "slack" {
+      token = file("slack-token")
+    }

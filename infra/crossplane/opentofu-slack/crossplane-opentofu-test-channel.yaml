@@ -1,0 +1,24 @@
+apiVersion: opentofu.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: crossplane-opentofu-test-channel
+  annotations:
+    crossplane.io/external-name: slack-crossplane-opentofu-test-channel
+spec:
+  forProvider:
+    source: Inline
+    module: |
+      resource "slack_conversation" "channel" {
+        name       = "crossplane-opentofu-test-channel"
+        is_private = false
+        purpose    = "Public channel created by Crossplane through OpenTofu."
+      }
+
+      output "channel_id" {
+        value = slack_conversation.channel.id
+      }
+  providerConfigRef:
+    name: slack
+  writeConnectionSecretToRef:
+    namespace: crossplane-system
+    name: crossplane-opentofu-test-channel-connection
