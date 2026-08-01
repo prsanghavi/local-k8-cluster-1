@@ -5,7 +5,7 @@ metadata:
 spec:
   forProvider:
     name: crossplane-test-channel
-    isPrivate: true
-    purpose: Private channel created by Crossplane for provider verification.
+    isPrivate: false
+    purpose: Public channel created by Crossplane for provider verification.
   providerConfigRef:
     name: default
