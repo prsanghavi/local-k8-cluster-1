@@ -16,7 +16,9 @@ spec:
     terraform {
       required_providers {
         slack = {
-          source  = "TrueLayer/slack"
+          # OpenTofu otherwise defaults to registry.opentofu.org, where this
+          # provider is not published.
+          source  = "registry.terraform.io/TrueLayer/slack"
           version = "1.4.1"
         }
       }
