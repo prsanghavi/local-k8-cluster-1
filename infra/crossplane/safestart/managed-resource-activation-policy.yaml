@@ -1,0 +1,16 @@
+# Crossplane v2 SafeStart: do not activate every provider API by default.
+# Keep the APIs currently used by this cluster active; new safe-start providers
+# remain inactive until explicitly added here.
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: ManagedResourceActivationPolicy
+metadata:
+  name: default
+spec:
+  activate:
+    # Native Slack provider resources retained during the OpenTofu migration.
+    - conversationbookmarks.bookmark.slack.crossplane.io
+    - conversationmembers.conversationmember.slack.crossplane.io
+    - conversationpins.pin.slack.crossplane.io
+    - conversations.conversation.slack.crossplane.io
+    # Cluster-scoped OpenTofu Workspace used by the Slack integration.
+    - workspaces.opentofu.upbound.io
