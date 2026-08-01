@@ -1,0 +1,11 @@
+apiVersion: conversation.slack.crossplane.io/v1alpha1
+kind: Conversation
+metadata:
+  name: crossplane-test-channel
+spec:
+  forProvider:
+    name: crossplane-test-channel
+    isPrivate: true
+    purpose: Private channel created by Crossplane for provider verification.
+  providerConfigRef:
+    name: default
