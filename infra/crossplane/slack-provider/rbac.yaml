@@ -1,11 +1,19 @@
-# provider-slack-conversation v2.0.1 omits ProviderConfigUsage permissions from
-# its package metadata. Crossplane uses these objects to track a managed
-# resource's reference to its ProviderConfig.
+# provider-slack-conversation v2.0.1 omits permissions for its ProviderConfig
+# and ProviderConfigUsage resources from its package metadata. Crossplane uses
+# these objects to configure and track managed resources.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: provider-slack-conversation-providerconfigusage
 rules:
+  - apiGroups:
+      - slack.crossplane.io
+    resources:
+      - providerconfigs
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - slack.crossplane.io
     resources:
