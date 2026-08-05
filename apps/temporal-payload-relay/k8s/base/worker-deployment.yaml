@@ -27,15 +27,12 @@ spec:
     spec:
       serviceAccountName: temporal-payload-relay
       volumes:
-        - name: minio-credentials
-          secret:
-            secretName: temporal-worker-minio-credentials
         - name: nexus-encryption-routes
           configMap:
             name: temporal-payload-relay-nexus-encryption-routes
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260727100837
+          image: k3d-registry:5000/temporal-payload-relay:local
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -54,20 +51,6 @@ spec:
               value: replace-me
             - name: TEMPORAL_WORKER_IDENTITY
               value: replace-me
-            - name: EXTERNAL_PAYLOAD_STORAGE_ENDPOINT
-              value: http://minio.minio.svc.cluster.local:9000
-            - name: EXTERNAL_PAYLOAD_STORAGE_REGION
-              value: us-east-1
-            - name: EXTERNAL_PAYLOAD_STORAGE_BUCKET
-              value: temporal-worker-payloads
-            - name: EXTERNAL_PAYLOAD_STORAGE_THRESHOLD_BYTES
-              value: "262144"
-            - name: EXTERNAL_PAYLOAD_STORAGE_MAX_BYTES
-              value: "1048576"
-            - name: EXTERNAL_PAYLOAD_STORAGE_ACCESS_KEY_PATH
-              value: /var/run/secrets/minio/root-user
-            - name: EXTERNAL_PAYLOAD_STORAGE_SECRET_KEY_PATH
-              value: /var/run/secrets/minio/root-password
             - name: ENABLE_PAYLOAD_ENCRYPTION
               value: "true"
             - name: VAULT_TRANSIT_MOUNT
@@ -77,9 +60,6 @@ spec:
             - name: NEXUS_ENCRYPTION_ROUTES_PATH
               value: /etc/temporal-security/routes.json
           volumeMounts:
-            - name: minio-credentials
-              mountPath: /var/run/secrets/minio
-              readOnly: true
             - name: nexus-encryption-routes
               mountPath: /etc/temporal-security
               readOnly: true

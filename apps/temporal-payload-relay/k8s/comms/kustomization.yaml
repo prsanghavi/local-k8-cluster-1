@@ -23,5 +23,8 @@ patches:
         path: /spec/template/spec/containers/0/env/3/value
         value: temporal-payload-relay-comms
       - op: replace
+        path: /spec/template/spec/containers/0/env/6/value
+        value: ob1-temporal-comms-cluster-1-ns-1
+      - op: replace
         path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
         value: temporal-payload-relay-comms
