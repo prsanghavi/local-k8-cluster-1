@@ -17,4 +17,5 @@ docker push "$PUSH_REGISTRY/$IMAGE_NAME:$TAG"
 docker push "$PUSH_REGISTRY/$IMAGE_NAME:local"
 
 echo "Built and pushed: $CLUSTER_REGISTRY/$IMAGE_NAME:$TAG"
-echo "The manifests use the local tag for this first local validation."
+echo "Built and pushed: $CLUSTER_REGISTRY/$IMAGE_NAME:local"
+echo "The manifests use the local tag."

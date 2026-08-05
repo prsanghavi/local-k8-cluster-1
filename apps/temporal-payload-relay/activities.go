@@ -26,7 +26,7 @@ func GenerateLargePayloadActivity(_ context.Context, input GenerateInput) (strin
 }
 
 // PrintPayloadActivity validates the application payload after the Temporal SDK
-// has transparently hydrated any external-storage reference from MinIO.
+// has transparently hydrated any external-storage reference.
 func PrintPayloadActivity(ctx context.Context, input RelayInput) error {
 	payload := []byte(input.Payload)
 	sum := sha256.Sum256(payload)
