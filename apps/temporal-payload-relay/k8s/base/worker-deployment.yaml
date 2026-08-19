@@ -32,7 +32,7 @@ spec:
             name: temporal-payload-relay-nexus-encryption-routes
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260817141054
+          image: k3d-registry:5000/temporal-payload-relay:local-20260819094842
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
