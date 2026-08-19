@@ -27,12 +27,12 @@ spec:
     spec:
       serviceAccountName: temporal-payload-relay
       volumes:
-        - name: nexus-encryption-routes
+        - name: nexus-encryption-policy
           configMap:
-            name: temporal-payload-relay-nexus-encryption-routes
+            name: temporal-payload-relay-nexus-encryption-policy
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260819100303
+          image: k3d-registry:5000/temporal-payload-relay:local-20260819160806
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -57,10 +57,10 @@ spec:
               value: transit
             - name: VAULT_TRANSIT_KEY
               value: temporal-payload-relay
-            - name: NEXUS_ENCRYPTION_ROUTES_PATH
-              value: /etc/temporal-security/routes.json
+            - name: NEXUS_ENCRYPTION_CAPABILITIES_PATH
+              value: /etc/temporal-security/capabilities.json
           volumeMounts:
-            - name: nexus-encryption-routes
+            - name: nexus-encryption-policy
               mountPath: /etc/temporal-security
               readOnly: true
           resources:

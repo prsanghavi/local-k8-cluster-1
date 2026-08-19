@@ -3,9 +3,9 @@ kind: Kustomization
 
 namespace: uo-bpo1-de-v2-budy-gilfoyle-ns-1
 configMapGenerator:
-  - name: temporal-payload-relay-nexus-encryption-routes
+  - name: temporal-payload-relay-nexus-encryption-policy
     files:
-      - routes.json=routes.json
+      - capabilities.json=capabilities.json
 resources:
   - ../base
 patches:
@@ -25,6 +25,11 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/6/value
         value: ob1-uo-temporal-budytest1-ns-1
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: PAYLOAD_ENCRYPTION_PRINCIPAL
+          value: budytest1
       - op: replace
         path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
         value: temporal-payload-relay-budytest1

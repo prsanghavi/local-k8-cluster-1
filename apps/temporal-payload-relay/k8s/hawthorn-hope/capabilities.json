@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "provided_services": [
+    {"service_id": "hawthorn", "service": "payload-relay"}
+  ],
+  "outbound_capabilities": [
+    {"endpoint": "ob1-nexus-llm-cluster-1-endpoint-1", "service": "payload-relay", "target_principal": "llm-router", "target_service_id": "llm-router"}
+  ]
+}
