@@ -3,9 +3,9 @@ kind: Kustomization
 
 namespace: ob1-tf-eks-de-v2-llm-1-ns-1
 configMapGenerator:
-  - name: temporal-payload-relay-nexus-encryption-routes
+  - name: temporal-payload-relay-nexus-encryption-policy
     files:
-      - routes.json=routes.json
+      - capabilities.json=capabilities.json
 resources:
   - ../base
 patches:
@@ -25,6 +25,11 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/6/value
         value: ob1-temporal-llm-router-1-ns-1
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: PAYLOAD_ENCRYPTION_PRINCIPAL
+          value: llm-router
       - op: replace
         path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
         value: temporal-payload-relay-llm-router

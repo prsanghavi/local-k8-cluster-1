@@ -14,7 +14,7 @@ func TestLargePayloadExceedsExternalStorageThreshold(t *testing.T) {
 
 func TestPayloadSizesDefaultAndCustom(t *testing.T) {
 	defaults, err := validatedPayloadSizes(nil)
-	if err != nil || len(defaults) != 4 {
+	if err != nil || len(defaults) != 2 {
 		t.Fatalf("defaults: %v, %v", defaults, err)
 	}
 	if _, err := validatedPayloadSizes([]int{1, 2, 3}); err == nil {
@@ -22,8 +22,11 @@ func TestPayloadSizesDefaultAndCustom(t *testing.T) {
 	}
 }
 
-func TestNexusRouteHasFourEndpoints(t *testing.T) {
-	if len(endpointForHop) != 4 {
-		t.Fatalf("got %d endpoints, want 4", len(endpointForHop))
+func TestNexusRouteHasAIWorkerEndpoints(t *testing.T) {
+	if len(endpointForAIWorker) != 2 {
+		t.Fatalf("got %d AI worker endpoints, want 2", len(endpointForAIWorker))
+	}
+	if endpointForAIWorker["budytest1"] == "" || endpointForAIWorker["hawthorn"] == "" {
+		t.Fatal("AI worker endpoint mapping is incomplete")
 	}
 }

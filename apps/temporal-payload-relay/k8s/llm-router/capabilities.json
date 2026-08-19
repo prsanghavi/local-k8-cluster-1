@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "provided_services": [
+    {"service_id": "llm-router", "service": "payload-relay"}
+  ],
+  "outbound_capabilities": []
+}

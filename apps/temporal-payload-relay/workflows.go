@@ -7,15 +7,16 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-var endpointForHop = []string{
-	"ob1-nexus-llm-cluster-1-endpoint-1",
-	"ob1-uo-temporal-budytest1-gilfoyletest1-1-1",
-	"ob1-uo-temporal-hawthorn-hope-1-1",
-	"ob1-nexus-comms-cluster-1-endpoint-1",
+const llmRouterEndpoint = "ob1-nexus-llm-cluster-1-endpoint-1"
+
+var endpointForAIWorker = map[string]string{
+	"budytest1": "ob1-uo-temporal-budytest1-gilfoyletest1-1-1",
+	"hawthorn":  "ob1-uo-temporal-hawthorn-hope-1-1",
 }
 
 type StartChainInput struct {
 	ChainID           string
+	AIWorker          string
 	PayloadSizesBytes []int
 }
 
@@ -32,7 +33,8 @@ type ChainResult struct {
 	PayloadSHA256 string
 }
 
-// StartChainWorkflow starts in the Comms namespace and invokes the LLM worker.
+// StartChainWorkflow starts in Comms and invokes one AI worker. That worker
+// calls LLM Router, receives its result, and returns the final result to Comms.
 func StartChainWorkflow(ctx workflow.Context, input StartChainInput) (ChainResult, error) {
 	if input.ChainID == "" {
 		return ChainResult{}, fmt.Errorf("ChainID is required")
@@ -41,23 +43,27 @@ func StartChainWorkflow(ctx workflow.Context, input StartChainInput) (ChainResul
 	if err != nil {
 		return ChainResult{}, err
 	}
+	endpoint, ok := endpointForAIWorker[input.AIWorker]
+	if !ok {
+		return ChainResult{}, fmt.Errorf("AIWorker must be budytest1 or hawthorn")
+	}
 	payload, err := generatePayload(ctx, input.ChainID, 0, sizes[0])
 	if err != nil {
 		return ChainResult{}, err
 	}
-	return callNext(ctx, RelayInput{ChainID: input.ChainID, Hop: 0, Payload: payload, PayloadSizesBytes: sizes})
+	return callEndpoint(ctx, endpoint, RelayInput{ChainID: input.ChainID, Hop: 0, Payload: payload, PayloadSizesBytes: sizes})
 }
 
-// RelayWorkflow runs in the target namespace for a Nexus operation. Each hop
-// prints its received payload in an activity, then creates the next payload.
+// RelayWorkflow runs in an AI worker or LLM Router. AI workers receive hop 0
+// and call LLM; LLM receives hop 1 and returns. Nexus response envelopes carry
+// the result back through the same AI worker to Comms.
 func RelayWorkflow(ctx workflow.Context, input RelayInput) (ChainResult, error) {
 	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: time.Minute})
 	if err := workflow.ExecuteActivity(activityCtx, PrintPayloadActivity, input).Get(activityCtx, nil); err != nil {
 		return ChainResult{}, err
 	}
 
-	// Hop 3 reaches Comms through the fourth endpoint and completes the cycle.
-	if input.Hop == len(endpointForHop)-1 {
+	if input.Hop == 1 {
 		return ChainResult{ChainID: input.ChainID, CompletedHop: input.Hop, PayloadSHA256: payloadSHA256(input.Payload)}, nil
 	}
 
@@ -67,7 +73,7 @@ func RelayWorkflow(ctx workflow.Context, input RelayInput) (ChainResult, error) 
 		return ChainResult{}, err
 	}
 	next := RelayInput{ChainID: input.ChainID, Hop: nextHop, Payload: payload, PayloadSizesBytes: input.PayloadSizesBytes}
-	return callNext(ctx, next)
+	return callEndpoint(ctx, llmRouterEndpoint, next)
 }
 
 // generatePayload creates the message in an activity so the normal Temporal
@@ -85,10 +91,10 @@ func generatePayload(ctx workflow.Context, chainID string, hop, sizeBytes int) (
 
 func validatedPayloadSizes(sizes []int) ([]int, error) {
 	if len(sizes) == 0 {
-		return []int{320 * 1024, 320 * 1024, 320 * 1024, 320 * 1024}, nil
+		return []int{320 * 1024, 320 * 1024}, nil
 	}
-	if len(sizes) != len(endpointForHop) {
-		return nil, fmt.Errorf("PayloadSizesBytes must contain exactly %d values", len(endpointForHop))
+	if len(sizes) != 2 {
+		return nil, fmt.Errorf("PayloadSizesBytes must contain exactly 2 values")
 	}
 	for _, size := range sizes {
 		if size <= 0 {
@@ -98,8 +104,7 @@ func validatedPayloadSizes(sizes []int) ([]int, error) {
 	return sizes, nil
 }
 
-func callNext(ctx workflow.Context, input RelayInput) (ChainResult, error) {
-	endpoint := endpointForHop[input.Hop]
+func callEndpoint(ctx workflow.Context, endpoint string, input RelayInput) (ChainResult, error) {
 	nexusClient := workflow.NewNexusClient(endpoint, nexusServiceName)
 	future := nexusClient.ExecuteOperation(ctx, nexusOperation, input, workflow.NexusOperationOptions{ScheduleToCloseTimeout: 5 * time.Minute})
 	var result ChainResult
