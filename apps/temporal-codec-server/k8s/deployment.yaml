@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-codec-server
+  labels:
+    app: temporal-codec-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-codec-server
+  template:
+    metadata:
+      labels:
+        app: temporal-codec-server
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-run-as-same-user: "true"
+        vault.hashicorp.com/agent-cache-enable: "true"
+        vault.hashicorp.com/agent-cache-use-auto-auth-token: "force"
+        vault.hashicorp.com/agent-cache-listener-port: "8200"
+        vault.hashicorp.com/role: temporal-codec-server
+        vault.hashicorp.com/service: http://vault.vault.svc.cluster.local:8200
+    spec:
+      serviceAccountName: temporal-codec-server
+      containers:
+        - name: temporal-codec-server
+          image: k3d-registry:5000/temporal-codec-server:local-20260820121642
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: VAULT_TRANSIT_MOUNT
+              value: transit
+            - name: VAULT_ALLOWED_SYMMETRIC_KEYS
+              value: ob1-temporal-comms-cluster-1-ns-1,ob1-temporal-llm-router-1-ns-1,ob1-uo-temporal-budytest1-ns-1,ob1-uo-temporal-hawthorn-ns-1
+            - name: VAULT_ALLOWED_NEXUS_ENDPOINTS
+              value: ob1-nexus-comms-cluster-1-endpoint-1,ob1-nexus-llm-cluster-1-endpoint-1,ob1-uo-temporal-budytest1-gilfoyletest1-1-1,ob1-uo-temporal-hawthorn-hope-1-1
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi

@@ -82,6 +82,11 @@ web:
   additionalEnv:
     - name: TEMPORAL_CSRF_COOKIE_INSECURE
       value: "true"
+    # Temporal Web calls this browser-reachable, same-origin endpoint when a
+    # payload must be decoded for inspection. The local server exposes only
+    # /decode; it cannot encode or download payloads.
+    - name: TEMPORAL_CODEC_ENDPOINT
+      value: http://temporal.local/codec
   ingress:
     # Route the Temporal Web UI through k3d's bundled Traefik ingress.
     enabled: true
