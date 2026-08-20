@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-codec-server
+spec:
+  selector:
+    app: temporal-codec-server
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
