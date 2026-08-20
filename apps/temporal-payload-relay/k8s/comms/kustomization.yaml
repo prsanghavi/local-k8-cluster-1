@@ -2,10 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namespace: ob1-tf-eks-de-v2-comms-ns-1
-configMapGenerator:
-  - name: temporal-payload-relay-nexus-encryption-policy
-    files:
-      - capabilities.json=capabilities.json
 resources:
   - ../base
 patches:
@@ -25,11 +21,9 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/6/value
         value: ob1-temporal-comms-cluster-1-ns-1
-      - op: add
-        path: /spec/template/spec/containers/0/env/-
-        value:
-          name: PAYLOAD_ENCRYPTION_PRINCIPAL
-          value: comms
+      - op: replace
+        path: /spec/template/spec/containers/0/env/7/value
+        value: ob1-nexus-comms-cluster-1-endpoint-1
       - op: replace
         path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
         value: temporal-payload-relay-comms

@@ -2,10 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namespace: uo-bpo1-de-v2-hwhrn-hope-ns-1
-configMapGenerator:
-  - name: temporal-payload-relay-nexus-encryption-policy
-    files:
-      - capabilities.json=capabilities.json
 resources:
   - ../base
 patches:
@@ -25,11 +21,9 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/env/6/value
         value: ob1-uo-temporal-hawthorn-ns-1
-      - op: add
-        path: /spec/template/spec/containers/0/env/-
-        value:
-          name: PAYLOAD_ENCRYPTION_PRINCIPAL
-          value: hawthorn
+      - op: replace
+        path: /spec/template/spec/containers/0/env/7/value
+        value: ob1-uo-temporal-hawthorn-hope-1-1
       - op: replace
         path: /spec/template/metadata/annotations/vault.hashicorp.com~1role
         value: temporal-payload-relay-hawthorn-hope
