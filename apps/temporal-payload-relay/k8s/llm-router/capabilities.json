@@ -1,7 +1,8 @@
 {
-  "version": 1,
-  "provided_services": [
-    {"service_id": "llm-router", "service": "payload-relay"}
-  ],
-  "outbound_capabilities": []
+  "version": 2,
+  "identity": {
+    "endpoint": "ob1-nexus-llm-cluster-1-endpoint-1",
+    "key_id": "temporal-nexus-ob1-nexus-llm-cluster-1-endpoint-1"
+  },
+  "recipient_key_prefix": "temporal-nexus-"
 }
