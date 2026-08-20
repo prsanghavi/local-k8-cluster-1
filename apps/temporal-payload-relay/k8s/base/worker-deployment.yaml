@@ -26,13 +26,9 @@ spec:
         vault.hashicorp.com/service: http://vault.vault.svc.cluster.local:8200
     spec:
       serviceAccountName: temporal-payload-relay
-      volumes:
-        - name: nexus-encryption-policy
-          configMap:
-            name: temporal-payload-relay-nexus-encryption-policy
       containers:
         - name: temporal-payload-relay
-          image: k3d-registry:5000/temporal-payload-relay:local-20260819201824
+          image: k3d-registry:5000/temporal-payload-relay:local-20260820105812
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -57,12 +53,8 @@ spec:
               value: transit
             - name: VAULT_TRANSIT_KEY
               value: temporal-payload-relay
-            - name: NEXUS_ENCRYPTION_CAPABILITIES_PATH
-              value: /etc/temporal-security/capabilities.json
-          volumeMounts:
-            - name: nexus-encryption-policy
-              mountPath: /etc/temporal-security
-              readOnly: true
+            - name: NEXUS_ENCRYPTION_ENDPOINT
+              value: replace-me
           resources:
             requests:
               cpu: "100m"

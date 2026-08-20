@@ -22,12 +22,13 @@ func workerConfigFromEnv() (temporalworker.Config, error) {
 		Identity:  identity,
 		// Local relay testing focuses on Vault envelope encryption and Nexus
 		// boundaries. MinIO external storage is intentionally disabled.
-		EnableExternalPayloadStorage:    false,
-		EnablePayloadEncryption:         enableEncryption,
-		VaultTransitMount:               envOr("VAULT_TRANSIT_MOUNT", "transit"),
-		VaultTransitKey:                 envOr("VAULT_TRANSIT_KEY", "temporal-payload-relay"),
-		PayloadEncryptionPrincipal:      envOr("PAYLOAD_ENCRYPTION_PRINCIPAL", identity),
-		NexusEncryptionCapabilitiesPath: envOr("NEXUS_ENCRYPTION_CAPABILITIES_PATH", "/etc/temporal-security/capabilities.json"),
+		EnableExternalPayloadStorage: false,
+		EnablePayloadEncryption:      enableEncryption,
+		VaultTransitMount:            envOr("VAULT_TRANSIT_MOUNT", "transit"),
+		VaultTransitKey:              envOr("VAULT_TRANSIT_KEY", "temporal-payload-relay"),
+		NexusEncryptionIdentity: temporalworker.NexusEncryptionIdentity{
+			Endpoint: os.Getenv("NEXUS_ENCRYPTION_ENDPOINT"),
+		},
 	}, nil
 }
 
